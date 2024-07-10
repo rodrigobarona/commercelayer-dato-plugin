@@ -108,7 +108,16 @@ export default function Value({ value, onReset }: ValueProps) {
             )}
             {renderMetadata(product.attributes.metadata)}
 
-            {product.relationships.prices[0]}
+            {Array.isArray(product.relationships.prices) && (
+              <div className={s["product__prices"]}>
+                <strong>Prices:</strong>
+                {product.relationships.prices.map((price, index) => (
+                  <div key={index} className={s["product__producttype"]}>
+                    {price}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
