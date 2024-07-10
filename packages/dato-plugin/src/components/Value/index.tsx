@@ -21,7 +21,7 @@ export type ValueProps = {
 
 const renderMetadata = (metadata: { [key: string]: string }) => {
   return Object.entries(metadata).map(([key, value]) => (
-    <div key={key}>
+    <div className={s["product__producttype"]} key={key}>
       <strong>{key}:</strong> {value}
     </div>
   ));
@@ -67,10 +67,14 @@ export default function Value({ value, onReset }: ValueProps) {
       )}
       {product && (
         <div className={s["product"]}>
-          <div
-            className={s["product__image"]}
-            style={{ backgroundImage: `url(${product.attributes.image_url})` }}
-          />
+          {product.attributes.image_url && (
+            <div
+              className={s["product__image"]}
+              style={{
+                backgroundImage: `url(${product.attributes.image_url})`,
+              }}
+            />
+          )}
           <div className={s["product__info"]}>
             <div className={s["product__title"]}>
               <a
@@ -87,16 +91,14 @@ export default function Value({ value, onReset }: ValueProps) {
               &nbsp;
               {product.attributes.code}
             </div>
-            <div className={s["product__producttype"]}>
-              <strong>Pieces per pack:</strong>
-              &nbsp;
-              {product.attributes.pieces_per_pack} pieces
-            </div>
-            <div className={s["product__producttype"]}>
-              <strong>Metadata:</strong>
-              &nbsp;
-              {renderMetadata(product.attributes.metadata)}
-            </div>
+            {product.attributes.pieces_per_pack && (
+              <div className={s["product__producttype"]}>
+                <strong>Pieces per pack:</strong>
+                &nbsp;
+                {product.attributes.pieces_per_pack} pieces
+              </div>
+            )}
+            {renderMetadata(product.attributes.metadata)}
           </div>
         </div>
       )}
