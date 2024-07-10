@@ -19,6 +19,7 @@ export default class CommerceLayerClient {
   token: string | null;
 
   constructor({
+    organizationName,
     baseEndpoint,
     clientId,
     clientSecret,
