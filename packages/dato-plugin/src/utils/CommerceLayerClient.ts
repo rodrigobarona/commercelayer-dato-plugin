@@ -17,8 +17,10 @@ export type Product = {
     code: string;
     description: string;
     pieces_per_pack: number;
-    prices: Prices;
     metadata: Metadata;
+  };
+  relationships: {
+    prices: Prices;
   };
 };
 
