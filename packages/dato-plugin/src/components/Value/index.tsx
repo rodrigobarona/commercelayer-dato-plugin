@@ -27,6 +27,26 @@ const renderMetadata = (metadata: { [key: string]: string }) => {
   ));
 };
 
+const renderPrices = (prices: string[] | undefined) => {
+  if (!prices || prices.length === 0) return null;
+
+  return prices.map((price, index) => (
+    <div className={s["product__producttype"]} key={index}>
+      Price {index + 1}: {price}
+    </div>
+  ));
+};
+
+const renderStockItems = (stockItems: any[] | undefined) => {
+  if (!stockItems || stockItems.length === 0) return null;
+
+  return stockItems.map((item, index) => (
+    <div className={s["product__producttype"]} key={index}>
+      Stock Item {index + 1}: {item}
+    </div>
+  ));
+};
+
 export default function Value({ value, onReset }: ValueProps) {
   const ctx = useCtx<RenderFieldExtensionCtx>();
 
@@ -102,6 +122,18 @@ export default function Value({ value, onReset }: ValueProps) {
               </div>
             )}
             {renderMetadata(product.attributes.metadata)}
+            {product.relationships.prices && (
+              <div className={s["product__prices"]}>
+                <strong>Prices:</strong>
+                {renderPrices(product.relationships.prices)}
+              </div>
+            )}
+            {product.relationships.stock_items && (
+              <div className={s["product__stockitems"]}>
+                <strong>Stock Items:</strong>
+                {renderStockItems(product.relationships.stock_items)}
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -16,7 +16,8 @@ export type Product = {
     metadata: Metadata;
   };
   relationships: {
-    prices: string;
+    prices: string[];
+    stock_items: any[];
   };
 };
 
