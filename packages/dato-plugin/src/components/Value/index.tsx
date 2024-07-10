@@ -88,9 +88,9 @@ export default function Value({ value, onReset }: ValueProps) {
               {product.attributes.code}
             </div>
             <div className={s["product__producttype"]}>
-              <strong>Description:</strong>
+              <strong>Pieces per pack:</strong>
               &nbsp;
-              {product.attributes.description}
+              {product.attributes.pieces_per_pack} pieces
             </div>
             <div className={s["product__producttype"]}>
               <strong>Metadata:</strong>
