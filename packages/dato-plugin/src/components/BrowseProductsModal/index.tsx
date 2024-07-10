@@ -65,7 +65,7 @@ export default function BrowseProductsModal({ ctx }: { ctx: RenderModalCtx }) {
         </form>
         <div className={s["add__container"]}>
           <a
-            href={`https://dashboard.commercelayer.io/live/${organizationName}/apps/skus/new}`}
+            href={`https://dashboard.commercelayer.io/live/${organizationName}/apps/skus/new`}
             target="_blank"
             rel="noopener noreferrer"
           >
