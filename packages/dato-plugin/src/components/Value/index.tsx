@@ -108,7 +108,7 @@ export default function Value({ value, onReset }: ValueProps) {
             )}
             {renderMetadata(product.attributes.metadata)}
 
-            {renderMetadata(product.relationships.prices)}
+            {renderPrices(product.relationships.prices)}
           </div>
         </div>
       )}
