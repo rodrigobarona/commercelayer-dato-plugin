@@ -27,10 +27,10 @@ const renderMetadata = (metadata: { [key: string]: string }) => {
   ));
 };
 
-const renderPrices = (prices: { [key: string]: string }) => {
-  return Object.entries(prices).map(([key, value]) => (
-    <div className={s["product__producttype"]} key={key}>
-      <strong>{key}:</strong> {value}
+const renderPrices = (prices: string[]) => {
+  return prices.map((price, index) => (
+    <div className={s["product__producttype"]} key={index}>
+      {price}
     </div>
   ));
 };

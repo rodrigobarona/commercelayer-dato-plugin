@@ -6,7 +6,7 @@ export type Metadata = {
 };
 
 export type Prices = {
-  [key: string]: string;
+  [Price: string]: string;
 };
 
 export type Product = {
