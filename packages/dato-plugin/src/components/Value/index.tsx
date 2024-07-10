@@ -93,16 +93,6 @@ export default function Value({ value, onReset }: ValueProps) {
               {product.attributes.pieces_per_pack} pieces
             </div>
             <div className={s["product__producttype"]}>
-              <strong>Reference:</strong>
-              &nbsp;
-              {product.attributes.reference}
-            </div>
-            <div className={s["product__producttype"]}>
-              <strong>Reference Origin:</strong>
-              &nbsp;
-              {product.attributes.reference_origin}
-            </div>
-            <div className={s["product__producttype"]}>
               <strong>Metadata:</strong>
               &nbsp;
               {renderMetadata(product.attributes.metadata)}

@@ -13,8 +13,6 @@ export type Product = {
     code: string;
     description: string;
     pieces_per_pack: number;
-    reference: string;
-    reference_origin: string;
     metadata: Metadata;
   };
 };
