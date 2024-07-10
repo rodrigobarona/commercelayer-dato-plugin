@@ -87,7 +87,7 @@ export default function Value({ value, onReset }: ValueProps) {
             <div className={s["product__producttype"]}>
               <strong>Metadata:</strong>
               &nbsp;
-              {product.attributes.metadata[0]}
+              {product.attributes.metadata.barcode}
             </div>
           </div>
         </div>
