@@ -87,11 +87,7 @@ export default function Value({ value, onReset }: ValueProps) {
             <div className={s["product__producttype"]}>
               <strong>Metadata:</strong>
               &nbsp;
-              {product.attributes.metadata.map((item: any, index: number) => (
-                <div key={index}>
-                  <strong>{item.key}:</strong> {item.value}
-                </div>
-              ))}
+              {product.attributes.metadata[0]}
             </div>
           </div>
         </div>
