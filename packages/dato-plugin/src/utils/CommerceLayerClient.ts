@@ -8,6 +8,7 @@ export type Product = {
     name: string;
     code: string;
     description: string;
+    metadata: any;
   };
 };
 
