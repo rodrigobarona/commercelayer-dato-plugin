@@ -27,6 +27,14 @@ const renderMetadata = (metadata: { [key: string]: string }) => {
   ));
 };
 
+const renderPrices = (prices: { [key: string]: string }) => {
+  return Object.entries(prices).map(([key, value]) => (
+    <div className={s["product__producttype"]} key={key}>
+      <strong>{key}:</strong> {value}
+    </div>
+  ));
+};
+
 export default function Value({ value, onReset }: ValueProps) {
   const ctx = useCtx<RenderFieldExtensionCtx>();
 
@@ -99,6 +107,8 @@ export default function Value({ value, onReset }: ValueProps) {
               </div>
             )}
             {renderMetadata(product.attributes.metadata)}
+
+            {renderPrices(product.attributes.prices)}
           </div>
         </div>
       )}
