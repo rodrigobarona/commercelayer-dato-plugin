@@ -27,12 +27,26 @@ const renderMetadata = (metadata: { [key: string]: string }) => {
   ));
 };
 
-const renderPrices = (prices: string[] | undefined) => {
+import React from "react";
+
+const renderPrices = (prices: any[] | undefined) => {
   if (!prices || prices.length === 0) return null;
 
   return prices.map((price, index) => (
-    <div className={s["product__producttype"]} key={index}>
-      Price {index + 1}: {price}
+    <div className={s["product__prices"]} key={index}>
+      <strong>Price {index + 1}:</strong>
+      <div className={s["product__producttype"]}>
+        {price.someField} {/* Replace with your actual field */}
+      </div>
+      <div className={s["product__links"]}>
+        Links:
+        <div className={s["product__producttype"]}>
+          Self: {price.links.self}
+        </div>
+        <div className={s["product__producttype"]}>
+          Related: {price.links.related}
+        </div>
+      </div>
     </div>
   ));
 };
@@ -41,8 +55,18 @@ const renderStockItems = (stockItems: any[] | undefined) => {
   if (!stockItems || stockItems.length === 0) return null;
 
   return stockItems.map((item, index) => (
-    <div className={s["product__producttype"]} key={index}>
-      Stock Item {index + 1}: {item}
+    <div className={s["product__stockitems"]} key={index}>
+      <strong>Stock Item {index + 1}:</strong>
+      <div className={s["product__producttype"]}>
+        {item.someField} {/* Replace with your actual field */}
+      </div>
+      <div className={s["product__links"]}>
+        Links:
+        <div className={s["product__producttype"]}>Self: {item.links.self}</div>
+        <div className={s["product__producttype"]}>
+          Related: {item.links.related}
+        </div>
+      </div>
     </div>
   ));
 };
