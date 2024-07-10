@@ -5,10 +5,6 @@ export type Metadata = {
   [key: string]: string;
 };
 
-export type Prices = {
-  [Price: string]: string;
-};
-
 export type Product = {
   id: string;
   attributes: {
@@ -20,7 +16,7 @@ export type Product = {
     metadata: Metadata;
   };
   relationships: {
-    prices: Prices;
+    prices: string;
   };
 };
 
