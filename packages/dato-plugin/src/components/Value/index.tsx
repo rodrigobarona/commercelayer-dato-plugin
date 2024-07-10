@@ -1,67 +1,72 @@
-import { useCallback, useEffect, useMemo } from 'react'
-import { normalizeConfig } from '../../types'
-import { useCtx } from 'datocms-react-ui'
-import { RenderFieldExtensionCtx } from 'datocms-plugin-sdk'
-import CommerceLayerClient from '../../utils/CommerceLayerClient'
-import useStore, { State } from '../../utils/useStore'
-import s from './styles.module.css'
-import classNames from 'classnames'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { useCallback, useEffect, useMemo } from "react";
+import { normalizeConfig } from "../../types";
+import { useCtx } from "datocms-react-ui";
+import { RenderFieldExtensionCtx } from "datocms-plugin-sdk";
+import CommerceLayerClient from "../../utils/CommerceLayerClient";
+import useStore, { State } from "../../utils/useStore";
+import s from "./styles.module.css";
+import classNames from "classnames";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faExternalLinkAlt,
   faTimesCircle,
-} from '@fortawesome/free-solid-svg-icons'
+} from "@fortawesome/free-solid-svg-icons";
 
-const fetchProductByCodeSelector = (state: State) => state.fetchProductByCode
+const fetchProductByCodeSelector = (state: State) => state.fetchProductByCode;
 
 export type ValueProps = {
-  value: string
-  onReset: () => void
-}
+  value: string;
+  onReset: () => void;
+};
 
 export default function Value({ value, onReset }: ValueProps) {
-  const ctx = useCtx<RenderFieldExtensionCtx>()
+  const ctx = useCtx<RenderFieldExtensionCtx>();
 
-  const { baseEndpoint, clientId, clientSecret } = normalizeConfig(
-    ctx.plugin.attributes.parameters
-  )
+  const { organizationName, baseEndpoint, clientId, clientSecret } =
+    normalizeConfig(ctx.plugin.attributes.parameters);
 
   const client = useMemo(
-    () => new CommerceLayerClient({ baseEndpoint, clientId, clientSecret }),
-    [baseEndpoint, clientId, clientSecret]
-  )
+    () =>
+      new CommerceLayerClient({
+        organizationName,
+        baseEndpoint,
+        clientId,
+        clientSecret,
+      }),
+    [organizationName, baseEndpoint, clientId, clientSecret]
+  );
 
   const { product, status } = useStore(
     useCallback((state) => state.getProduct(value), [value])
-  )
+  );
 
-  const fetchProductByCode = useStore(fetchProductByCodeSelector)
+  const fetchProductByCode = useStore(fetchProductByCodeSelector);
 
   useEffect(() => {
-    fetchProductByCode(client, value)
-  }, [client, value, fetchProductByCode])
+    fetchProductByCode(client, value);
+  }, [client, value, fetchProductByCode]);
   return (
     <div
-      className={classNames(s['value'], {
-        [s['loading']]: status === 'loading',
+      className={classNames(s["value"], {
+        [s["loading"]]: status === "loading",
       })}
     >
-      {status === 'error' && (
-        <div className={s['product']}>
+      {status === "error" && (
+        <div className={s["product"]}>
           API Error! Could not fetch details for SKU:&nbsp;
           <code>{value}</code>
         </div>
       )}
       {product && (
-        <div className={s['product']}>
+        <div className={s["product"]}>
           <div
-            className={s['product__image']}
+            className={s["product__image"]}
             style={{ backgroundImage: `url(${product.attributes.image_url})` }}
           />
-          <div className={s['product__info']}>
-            <div className={s['product__title']}>
+          <div className={s["product__info"]}>
+            <div className={s["product__title"]}>
               <a
-                href={`${baseEndpoint}/admin/skus/${product.id}/edit`}
+                href={`https://dashboard.commercelayer.io/live/${organizationName}/apps/skus/list/${product.id}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -69,12 +74,12 @@ export default function Value({ value, onReset }: ValueProps) {
               </a>
               <FontAwesomeIcon icon={faExternalLinkAlt} />
             </div>
-            <div className={s['product__producttype']}>
+            <div className={s["product__producttype"]}>
               <strong>SKU:</strong>
               &nbsp;
               {product.attributes.code}
             </div>
-            <div className={s['product__producttype']}>
+            <div className={s["product__producttype"]}>
               <strong>Description:</strong>
               &nbsp;
               {product.attributes.description}
@@ -82,9 +87,9 @@ export default function Value({ value, onReset }: ValueProps) {
           </div>
         </div>
       )}
-      <button type="button" onClick={onReset} className={s['reset']}>
+      <button type="button" onClick={onReset} className={s["reset"]}>
         <FontAwesomeIcon icon={faTimesCircle} />
       </button>
     </div>
-  )
+  );
 }
