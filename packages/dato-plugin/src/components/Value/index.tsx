@@ -27,8 +27,6 @@ const renderMetadata = (metadata: { [key: string]: string }) => {
   ));
 };
 
-import React from "react";
-
 const renderPrices = (prices: any[] | undefined) => {
   if (!prices || prices.length === 0) return null;
 
