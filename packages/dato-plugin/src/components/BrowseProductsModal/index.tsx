@@ -65,7 +65,7 @@ export default function BrowseProductsModal({ ctx }: { ctx: RenderModalCtx }) {
         </form>
         <div className={s["add__container"]}>
           <a
-            href={`${baseEndpoint}/admin/skus/new`}
+            href={`https://dashboard.commercelayer.io/live/${organizationName}/apps/skus/new}`}
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -92,18 +92,20 @@ export default function BrowseProductsModal({ ctx }: { ctx: RenderModalCtx }) {
                   onClick={() => ctx.resolve(product)}
                   className={s["product"]}
                 >
-                  <div className={s["product__image"]}>
-                    <img
-                      src={`${product.attributes.image_url}?auto=format&w=100&h=100&fit=crop`}
-                      alt={product.attributes.code}
-                    />
-                  </div>
+                  {product.attributes.image_url && (
+                    <div className={s["product__image"]}>
+                      <img
+                        src={`${product.attributes.image_url}?auto=format&w=100&h=100&fit=crop`}
+                        alt={product.attributes.code}
+                      />
+                    </div>
+                  )}
                   <div className={s["product__content"]}>
                     <div className={s["product__code"]}>
-                      {product.attributes.code}
+                      {product.attributes.name}
                     </div>
                     <div className={s["product__title"]}>
-                      {product.attributes.name}
+                      <strong>SKU:</strong>&nbsp;{product.attributes.code}
                     </div>
                   </div>
                 </div>
