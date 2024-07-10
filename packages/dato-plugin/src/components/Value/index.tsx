@@ -27,12 +27,20 @@ const renderMetadata = (metadata: { [key: string]: string }) => {
   ));
 };
 
-const renderPrices = (prices: { [key: string]: string }) => {
-  return Object.entries(prices).map(([key, value]) => (
-    <div className={s["product__producttype"]} key={key}>
-      <strong>{key}:</strong> {value}
-    </div>
-  ));
+const renderPrices = (prices: string[] | { [key: string]: string }) => {
+  if (Array.isArray(prices)) {
+    return prices.map((price, index) => (
+      <div className={s["product__producttype"]} key={index}>
+        {price}
+      </div>
+    ));
+  } else {
+    return Object.entries(prices).map(([key, value]) => (
+      <div className={s["product__producttype"]} key={key}>
+        <strong>{key}:</strong> {value}
+      </div>
+    ));
+  }
 };
 
 export default function Value({ value, onReset }: ValueProps) {
