@@ -19,6 +19,14 @@ export type ValueProps = {
   onReset: () => void;
 };
 
+const renderMetadata = (metadata: { [key: string]: string }) => {
+  return Object.entries(metadata).map(([key, value]) => (
+    <div key={key}>
+      <strong>{key}:</strong> {value}
+    </div>
+  ));
+};
+
 export default function Value({ value, onReset }: ValueProps) {
   const ctx = useCtx<RenderFieldExtensionCtx>();
 
@@ -87,7 +95,7 @@ export default function Value({ value, onReset }: ValueProps) {
             <div className={s["product__producttype"]}>
               <strong>Metadata:</strong>
               &nbsp;
-              {product.attributes.metadata.barcode}
+              {renderMetadata(product.attributes.metadata)}
             </div>
           </div>
         </div>

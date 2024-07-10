@@ -1,6 +1,10 @@
 import qs from "qs";
 import { ValidConfig } from "../types";
 
+export type Metadata = {
+  [key: string]: string;
+};
+
 export type Product = {
   id: string;
   attributes: {
@@ -8,7 +12,7 @@ export type Product = {
     name: string;
     code: string;
     description: string;
-    metadata: any;
+    metadata: Metadata;
   };
 };
 
