@@ -11,15 +11,12 @@ import { Form as FormHandler, Field } from "react-final-form";
 import { ValidConfig, normalizeConfig } from "../types";
 import CommerceLayerClient from "../utils/CommerceLayerClient";
 import s from "./styles.module.css";
-import { useState } from "react";
 
 type Props = {
   ctx: RenderConfigScreenCtx;
 };
 
 export default function ConfigScreen({ ctx }: Props) {
-  const [debugMode, setDebugMode] = useState(true); //
-
   return (
     <Canvas ctx={ctx}>
       <FormHandler<ValidConfig>
@@ -99,8 +96,8 @@ export default function ConfigScreen({ ctx }: Props) {
                     id="testMode"
                     label="Test Mode"
                     hint="Active in Test Mode or Live"
-                    value={debugMode}
-                    onChange={(newValue) => setDebugMode(newValue)}
+                    value={true}
+                    onChange={(newValue) => console.log(newValue)}
                   />
                 )}
               </Field>
