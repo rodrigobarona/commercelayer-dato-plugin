@@ -1,5 +1,12 @@
 import { RenderConfigScreenCtx } from "datocms-plugin-sdk";
-import { Button, Canvas, TextField, Form, FieldGroup } from "datocms-react-ui";
+import {
+  Button,
+  Canvas,
+  TextField,
+  Form,
+  FieldGroup,
+  SwitchField,
+} from "datocms-react-ui";
 import { Form as FormHandler, Field } from "react-final-form";
 import { ValidConfig, normalizeConfig } from "../types";
 import CommerceLayerClient from "../utils/CommerceLayerClient";
@@ -60,7 +67,7 @@ export default function ConfigScreen({ ctx }: Props) {
                 {({ input, meta: { error } }) => (
                   <TextField
                     id="organizationName"
-                    label="Commerce Layer organization Name"
+                    label="Commerce Layer Organization Name"
                     placeholder="organization"
                     required
                     error={error}
@@ -79,6 +86,18 @@ export default function ConfigScreen({ ctx }: Props) {
                     error={error}
                     textInputProps={{ monospaced: true }}
                     {...input}
+                  />
+                )}
+              </Field>
+              <Field name="testMode">
+                {({ input, meta: { error } }) => (
+                  <SwitchField
+                    name="testMode"
+                    id="testMode"
+                    label="Test Mode"
+                    hint="Active in Test Mode or Live"
+                    value={true}
+                    onChange={(newValue) => console.log(newValue)}
                   />
                 )}
               </Field>

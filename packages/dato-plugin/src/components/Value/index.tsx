@@ -30,7 +30,7 @@ const renderMetadata = (metadata: { [key: string]: string }) => {
 export default function Value({ value, onReset }: ValueProps) {
   const ctx = useCtx<RenderFieldExtensionCtx>();
 
-  const { organizationName, baseEndpoint, clientId, clientSecret } =
+  const { organizationName, baseEndpoint, testMode, clientId, clientSecret } =
     normalizeConfig(ctx.plugin.attributes.parameters);
 
   const client = useMemo(
@@ -38,10 +38,11 @@ export default function Value({ value, onReset }: ValueProps) {
       new CommerceLayerClient({
         organizationName,
         baseEndpoint,
+        testMode,
         clientId,
         clientSecret,
       }),
-    [organizationName, baseEndpoint, clientId, clientSecret]
+    [organizationName, baseEndpoint, testMode, clientId, clientSecret]
   );
 
   const { product, status } = useStore(
@@ -81,7 +82,7 @@ export default function Value({ value, onReset }: ValueProps) {
           <div className={s["product__info"]}>
             <div className={s["product__title"]}>
               <a
-                href={`https://dashboard.commercelayer.io/live/${organizationName}/apps/skus/list/${product.id}`}
+                href={`https://dashboard.commercelayer.io/${testMode ? "test" : "live"}/${organizationName}/apps/skus/list/${product.id}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
