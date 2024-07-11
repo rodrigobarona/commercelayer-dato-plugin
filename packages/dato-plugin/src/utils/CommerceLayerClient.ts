@@ -24,7 +24,6 @@ export type Product = {
 export default class CommerceLayerClient {
   organizationName: string;
   baseEndpoint: string;
-  testMode: boolean;
   clientId: string;
   clientSecret: string;
   token: string | null;
@@ -32,19 +31,13 @@ export default class CommerceLayerClient {
   constructor({
     organizationName,
     baseEndpoint,
-    testMode,
     clientId,
     clientSecret,
   }: Pick<
     ValidConfig,
-    | "organizationName"
-    | "baseEndpoint"
-    | "testMode"
-    | "clientId"
-    | "clientSecret"
+    "organizationName" | "baseEndpoint" | "clientId" | "clientSecret"
   >) {
     this.organizationName = organizationName;
-    this.testMode = testMode;
     this.baseEndpoint = baseEndpoint;
     this.clientId = clientId;
     this.clientSecret = clientSecret;

@@ -3,7 +3,6 @@ export type FirstInstallationParameters = {};
 export type ValidConfig = {
   organizationName: string;
   baseEndpoint: string;
-  testMode: boolean;
   clientId: string;
   clientSecret: string;
   autoApplyToFieldsWithApiKey: string;
@@ -14,7 +13,6 @@ export type LegacyConfig =
   | {
       organizationName: string;
       baseEndpoint: string;
-      testMode: boolean;
       clientId: string;
       clientSecret: string;
     }
@@ -36,7 +34,6 @@ export function normalizeConfig(params: Config): ValidConfig {
     organizationName:
       "organizationName" in params ? params.organizationName : "",
     baseEndpoint: "baseEndpoint" in params ? params.baseEndpoint : "",
-    testMode: "testMode" in params ? params.testMode : false,
     clientId: "clientId" in params ? params.clientId : "",
     clientSecret: "clientSecret" in params ? params.clientSecret : "",
     autoApplyToFieldsWithApiKey: "",

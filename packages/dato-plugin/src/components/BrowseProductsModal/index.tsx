@@ -8,7 +8,6 @@ import { normalizeConfig } from "../../types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch, faPlus } from "@fortawesome/free-solid-svg-icons";
 import classNames from "classnames";
-import test from "node:test";
 
 const currentSearchSelector = (state: State) => state.getCurrentSearch();
 const currentFetchProductsMatchingSelector = (state: State) =>
@@ -20,18 +19,17 @@ export default function BrowseProductsModal({ ctx }: { ctx: RenderModalCtx }) {
 
   const [sku, setSku] = useState<string>("");
 
-  const { organizationName, baseEndpoint, testMode, clientId, clientSecret } =
+  const { organizationName, baseEndpoint, clientId, clientSecret } =
     normalizeConfig(ctx.plugin.attributes.parameters);
 
   const client = useMemo(() => {
     return new CommerceLayerClient({
       organizationName,
       baseEndpoint,
-      testMode,
       clientId,
       clientSecret,
     });
-  }, [organizationName, baseEndpoint, testMode, clientId, clientSecret]);
+  }, [organizationName, baseEndpoint, clientId, clientSecret]);
 
   useEffect(() => {
     performSearch(client, query);
@@ -67,7 +65,7 @@ export default function BrowseProductsModal({ ctx }: { ctx: RenderModalCtx }) {
         </form>
         <div className={s["add__container"]}>
           <a
-            href={`https://dashboard.commercelayer.io/${testMode ? "test" : "live"}/${organizationName}/apps/skus/new`}
+            href={`https://dashboard.commercelayer.io/live/${organizationName}/apps/skus/new`}
             target="_blank"
             rel="noopener noreferrer"
           >
