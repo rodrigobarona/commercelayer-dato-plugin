@@ -110,12 +110,12 @@ export default function BrowseProductsModal({ ctx }: { ctx: RenderModalCtx }) {
             )}
           >
             <DropdownMenu>
-              <DropdownOption onClick={() => {}}>Reserva 1500</DropdownOption>
-              <DropdownOption onClick={() => {}}>
+              <DropdownOption onClick={() => { }}>Reserva 1500</DropdownOption>
+              <DropdownOption onClick={() => { }}>
                 Empregados Sogrape Portugal
               </DropdownOption>
               <DropdownSeparator />
-              <DropdownOption onClick={() => {}}>All prices</DropdownOption>
+              <DropdownOption onClick={() => { }}>All prices</DropdownOption>
             </DropdownMenu>
           </Dropdown>
         </div>

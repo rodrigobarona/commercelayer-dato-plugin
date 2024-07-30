@@ -23,6 +23,7 @@ export type Product = {
     prices: string[];
     stock_items: any[];
   };
+  pricing_list: any;
 };
 
 export default class CommerceLayerClient {
@@ -46,6 +47,12 @@ export default class CommerceLayerClient {
     this.clientId = clientId;
     this.clientSecret = clientSecret;
     this.token = null;
+  }
+
+  async productPricings(sku: string): Promise<any[]> {
+    const result = await this.get(`/api/skus/${sku}/prices`, {});
+
+    return result.data;
   }
 
   async productsMatching(query: string): Promise<Product[]> {

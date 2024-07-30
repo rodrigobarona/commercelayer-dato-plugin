@@ -102,6 +102,14 @@ export default function Value({ value, onReset }: ValueProps) {
               </div>
             )}
             {renderMetadata(product.attributes.metadata)}
+
+            {product.pricing_list?.length > 0 &&
+              (
+                <div>
+                  <strong>Price:</strong> {product.pricing_list[0].attributes.formatted_amount}
+                </div>
+              )
+            }
           </div>
         </div>
       )}
