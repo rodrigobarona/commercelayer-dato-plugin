@@ -120,6 +120,7 @@ export default function BrowseProductsModal({ ctx }: { ctx: RenderModalCtx }) {
           </Dropdown>
         </div>
         <div className={s["container"]}>
+          <h4>All Products</h4>
           {products && (
             <div
               className={classNames(s["products"], {
