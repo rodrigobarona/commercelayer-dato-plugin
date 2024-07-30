@@ -59,7 +59,7 @@ export default function BrowseProductsModal({ ctx }: { ctx: RenderModalCtx }) {
       <div className={s["browse"]}>
         <form className={s["search"]} onSubmit={handleSubmit}>
           <TextInput
-            placeholder="Search products... (ie. mens shirts)"
+            placeholder="Search products... (ie. Sandeman)"
             id="sku"
             name="sku"
             value={sku}
@@ -97,10 +97,12 @@ export default function BrowseProductsModal({ ctx }: { ctx: RenderModalCtx }) {
             )}
           >
             <DropdownMenu>
-              <DropdownOption>Reserva 1500</DropdownOption>
-              <DropdownOption>Colaboradores Sogrape Portugal</DropdownOption>
+              <DropdownOption onClick={() => {}}>Reserva 1500</DropdownOption>
+              <DropdownOption onClick={() => {}}>
+                Colaboradores Sogrape Portugal
+              </DropdownOption>
               <DropdownSeparator />
-              <DropdownOption>All prices</DropdownOption>
+              <DropdownOption onClick={() => {}}>All prices</DropdownOption>
             </DropdownMenu>
           </Dropdown>
         </div>
