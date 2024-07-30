@@ -81,7 +81,7 @@ export default function Value({ value, onReset }: ValueProps) {
           <div className={s["product__info"]}>
             <div className={s["product__title"]}>
               <a
-                href={`https://dashboard.commercelayer.io/live/${organizationName}/apps/skus/list/${product.id}`}
+                href={`https://dashboard.commercelayer.io/${product.meta.mode}/${organizationName}/apps/skus/list/${product.id}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >

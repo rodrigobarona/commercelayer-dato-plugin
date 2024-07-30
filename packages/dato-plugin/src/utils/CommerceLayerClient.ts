@@ -15,6 +15,10 @@ export type Product = {
     pieces_per_pack: number;
     metadata: Metadata;
   };
+  meta: {
+    mode: "live" | "test";
+    organization_id: string;
+  };
   relationships: {
     prices: string[];
     stock_items: any[];
