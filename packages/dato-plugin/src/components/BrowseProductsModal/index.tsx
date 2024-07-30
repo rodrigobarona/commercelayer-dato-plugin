@@ -17,7 +17,6 @@ import { normalizeConfig } from "../../types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faSearch,
-  faPlus,
   faCaretDown,
   faCaretUp,
 } from "@fortawesome/free-solid-svg-icons";
@@ -35,6 +34,20 @@ export default function BrowseProductsModal({ ctx }: { ctx: RenderModalCtx }) {
 
   const { organizationName, baseEndpoint, clientId, clientSecret } =
     normalizeConfig(ctx.plugin.attributes.parameters);
+
+  const renderMetadata = (metadata: { [key: string]: string }) => {
+    return Object.entries(metadata).map(([key, value]) => {
+      if (key === "Barcode") {
+        return (
+          <div className={s["product__title"]} key={key}>
+            <strong>{key}:</strong> {value}
+          </div>
+        );
+      } else {
+        return null; // Skip rendering if the key is not "Barcode"
+      }
+    });
+  };
 
   const client = useMemo(() => {
     return new CommerceLayerClient({
@@ -134,6 +147,7 @@ export default function BrowseProductsModal({ ctx }: { ctx: RenderModalCtx }) {
                     <div className={s["product__title"]}>
                       <strong>SKU:</strong>&nbsp;{product.attributes.code}
                     </div>
+                    {renderMetadata(product.attributes.metadata)}
                   </div>
                 </div>
               ))}
