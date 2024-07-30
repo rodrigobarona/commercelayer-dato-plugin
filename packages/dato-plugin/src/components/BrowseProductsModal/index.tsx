@@ -1,12 +1,26 @@
 import { RenderModalCtx } from "datocms-plugin-sdk";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Button, TextInput, Canvas, Spinner } from "datocms-react-ui";
+import {
+  Button,
+  TextInput,
+  Canvas,
+  Spinner,
+  Dropdown,
+  DropdownMenu,
+  DropdownOption,
+  DropdownSeparator,
+} from "datocms-react-ui";
 import s from "./styles.module.css";
 import CommerceLayerClient, { Product } from "../../utils/CommerceLayerClient";
 import useStore, { State } from "../../utils/useStore";
 import { normalizeConfig } from "../../types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSearch, faPlus } from "@fortawesome/free-solid-svg-icons";
+import {
+  faSearch,
+  faPlus,
+  faCaretDown,
+  faCaretUp,
+} from "@fortawesome/free-solid-svg-icons";
 import classNames from "classnames";
 
 const currentSearchSelector = (state: State) => state.getCurrentSearch();
@@ -64,20 +78,31 @@ export default function BrowseProductsModal({ ctx }: { ctx: RenderModalCtx }) {
           </Button>
         </form>
         <div className={s["add__container"]}>
-          <a
-            href={`https://dashboard.commercelayer.io/live/${organizationName}/apps/skus/new`}
-            target="_blank"
-            rel="noopener noreferrer"
+          <Dropdown
+            renderTrigger={({ open, onClick }) => (
+              <Button
+                onClick={onClick}
+                buttonType="negative"
+                buttonSize="s"
+                rightIcon={
+                  open ? (
+                    <FontAwesomeIcon icon={faCaretUp} />
+                  ) : (
+                    <FontAwesomeIcon icon={faCaretDown} />
+                  )
+                }
+              >
+                List prices
+              </Button>
+            )}
           >
-            <Button
-              type="button"
-              buttonType="negative"
-              buttonSize="s"
-              leftIcon={<FontAwesomeIcon icon={faPlus} />}
-            >
-              New SKU
-            </Button>
-          </a>
+            <DropdownMenu>
+              <DropdownOption>Reserva 1500</DropdownOption>
+              <DropdownOption>Colaboradores Sogrape Portugal</DropdownOption>
+              <DropdownSeparator />
+              <DropdownOption>All prices</DropdownOption>
+            </DropdownMenu>
+          </Dropdown>
         </div>
         <div className={s["container"]}>
           {products && (
