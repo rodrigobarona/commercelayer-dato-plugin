@@ -72,7 +72,7 @@ export default function BrowseProductsModal({ ctx }: { ctx: RenderModalCtx }) {
       <div className={s["browse"]}>
         <form className={s["search"]} onSubmit={handleSubmit}>
           <TextInput
-            placeholder="Search products... (ie. Sandeman)"
+            placeholder="Search by Product Name or SKU... (ie. Sandeman, 20651...)"
             id="sku"
             name="sku"
             value={sku}
