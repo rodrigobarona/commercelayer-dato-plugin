@@ -112,7 +112,7 @@ export default function BrowseProductsModal({ ctx }: { ctx: RenderModalCtx }) {
             <DropdownMenu>
               <DropdownOption onClick={() => {}}>Reserva 1500</DropdownOption>
               <DropdownOption onClick={() => {}}>
-                Colaboradores Sogrape Portugal
+                Empregados Sogrape Portugal
               </DropdownOption>
               <DropdownSeparator />
               <DropdownOption onClick={() => {}}>All prices</DropdownOption>
