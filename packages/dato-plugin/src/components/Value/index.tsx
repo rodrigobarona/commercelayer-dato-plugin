@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { normalizeConfig } from "../../types";
 import { useCtx } from "datocms-react-ui";
 import { RenderFieldExtensionCtx } from "datocms-plugin-sdk";
@@ -12,6 +12,28 @@ import {
   faTimesCircle,
 } from "@fortawesome/free-solid-svg-icons";
 
+interface Variation {
+  id: string;
+  variantImageGallery: Array<{
+    responsiveImage: {
+      src: string;
+    };
+  }>;
+  variantType: {
+    variation: string;
+  };
+}
+
+interface ProductVariationBarcode {
+  id: string;
+  barcodeNumber: string;
+  vintageYear: number;
+  capacity: {
+    capacityValue: string;
+  };
+  productVariant: Variation[];
+}
+
 const fetchProductByCodeSelector = (state: State) => state.fetchProductByCode;
 
 export type ValueProps = {
@@ -19,16 +41,79 @@ export type ValueProps = {
   onReset: () => void;
 };
 
-const renderMetadata = (metadata: { [key: string]: string }) => {
-  return Object.entries(metadata).map(([key, value]) => (
-    <div className={s["product__producttype"]} key={key}>
-      <strong>{key}:</strong> {value}
-    </div>
-  ));
+const fetchVariations = async (
+  barcode: string,
+  harvestYear: string,
+  bottleCapacity: string
+): Promise<Variation[]> => {
+  const query = `
+    query {
+      allProductVariationBarcodes(filter: {
+        barcodeNumber: { eq: "${barcode}" }
+      }) {
+        id
+        barcodeNumber
+        vintageYear
+        capacity {
+          capacityValue
+        }
+        productVariant {
+          id
+          variantImageGallery {
+            responsiveImage(imgixParams: {fit: fillmax, h: "100", w: "100", q: "60", auto: format}) {
+              src
+            }
+          }
+          variantType {
+            variation
+          }
+        }
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch("https://graphql.datocms.com/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer 45fc8dc1a9f26a390d9d451ea9ee00",
+      },
+      body: JSON.stringify({ query }),
+    });
+
+    const data = await response.json();
+    console.log("API Response:", data); // Log the entire response
+
+    if (data.errors) {
+      console.error("GraphQL Errors:", data.errors);
+      return [];
+    }
+
+    if (!data.data || !data.data.allProductVariationBarcodes) {
+      console.error("Unexpected API response structure:", data);
+      return [];
+    }
+
+    // Filter the results on the client side
+    const filteredVariations = data.data.allProductVariationBarcodes.filter(
+      (variation: ProductVariationBarcode) =>
+        variation.vintageYear === parseInt(harvestYear) &&
+        variation.capacity.capacityValue === bottleCapacity + " mL"
+    );
+
+    console.log("Filtered Variations:", filteredVariations);
+
+    return filteredVariations[0]?.productVariant || [];
+  } catch (error) {
+    console.error("Error fetching variations:", error);
+    return [];
+  }
 };
 
 export default function Value({ value, onReset }: ValueProps) {
   const ctx = useCtx<RenderFieldExtensionCtx>();
+  const [variations, setVariations] = useState<Variation[]>([]);
 
   const { organizationName, baseEndpoint, clientId, clientSecret } =
     normalizeConfig(ctx.plugin.attributes.parameters);
@@ -54,7 +139,30 @@ export default function Value({ value, onReset }: ValueProps) {
     fetchProductByCode(client, value);
   }, [client, value, fetchProductByCode]);
 
-  console.log("Product:", product);
+  useEffect(() => {
+    if (product && product.attributes.metadata) {
+      const barcode = product.attributes.metadata.Barcode;
+      const harvestYear = product.attributes.metadata.HarvestYear?.toString();
+      const bottleCapacity =
+        product.attributes.metadata.BottleCapacity?.split(" ")[0]; // Extract only the number
+
+      if (barcode && harvestYear && bottleCapacity) {
+        fetchVariations(barcode, harvestYear, bottleCapacity).then(
+          setVariations
+        );
+      }
+    }
+  }, [product]);
+
+  console.log("Variations:", variations); // Add this line to check the variations state
+
+  const renderMetadata = (metadata: Record<string, string>) => {
+    return Object.entries(metadata).map(([key, value]) => (
+      <div key={key} className={s["product__producttype"]}>
+        <strong>{key}:</strong> {value}
+      </div>
+    ));
+  };
 
   return (
     <div
@@ -94,13 +202,6 @@ export default function Value({ value, onReset }: ValueProps) {
               &nbsp;
               {product.attributes.code}
             </div>
-            {product.attributes.pieces_per_pack && (
-              <div className={s["product__producttype"]}>
-                <strong>Pieces per pack:</strong>
-                &nbsp;
-                {product.attributes.pieces_per_pack} pieces
-              </div>
-            )}
             {renderMetadata(product.attributes.metadata)}
 
             {product.pricing_list && product.pricing_list.length > 0 && (
@@ -132,6 +233,26 @@ export default function Value({ value, onReset }: ValueProps) {
                       </li>
                     );
                   })}
+                </ul>
+              </div>
+            )}
+            {variations.length > 0 && (
+              <div className={s["product__producttype"]}>
+                <strong>Variations:</strong>
+                <ul>
+                  {variations.map((variant: Variation) => (
+                    <li key={variant.id}>
+                      <img
+                        src={
+                          variant.variantImageGallery[0]?.responsiveImage.src
+                        }
+                        alt={variant.variantType.variation}
+                        width="50"
+                        height="50"
+                      />
+                      {variant.variantType.variation} (ID: {variant.id})
+                    </li>
+                  ))}
                 </ul>
               </div>
             )}
