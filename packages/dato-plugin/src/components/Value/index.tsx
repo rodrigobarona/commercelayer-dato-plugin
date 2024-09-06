@@ -103,29 +103,38 @@ export default function Value({ value, onReset }: ValueProps) {
             )}
             {renderMetadata(product.attributes.metadata)}
 
-            {product.pricing_list?.length > 0 && (
+            {product.pricing_list && product.pricing_list.length > 0 && (
               <div className={s["product__producttype"]}>
-                <strong>Price:</strong>{" "}
-                {product.pricing_list[0].attributes.formatted_amount} (
-                {product.pricing_list[0].attributes.name})
+                <strong>Prices:</strong>
+                <ul>
+                  {product.pricing_list.map((price, index) => (
+                    <li key={index}>
+                      {price.attributes.formatted_amount} (
+                      {price.attributes.name})
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
-            {product.stock_items?.length > 0 &&
-              product.stock_locations?.length > 0 && (
-                <div className={s["product__producttype"]}>
-                  <strong>Stock:</strong>{" "}
-                  {product.stock_items[0].attributes.quantity} available (
-                  {
-                    product.stock_locations.find(
+            {product.stock_items && product.stock_items.length > 0 && (
+              <div className={s["product__producttype"]}>
+                <strong>Stock:</strong>
+                <ul>
+                  {product.stock_items.map((item, index) => {
+                    const location = product.stock_locations?.find(
                       (loc) =>
-                        loc.id ===
-                        product.stock_items[0].relationships.stock_location.data
-                          .id
-                    )?.attributes.name
-                  }
-                  )
-                </div>
-              )}
+                        loc.id === item.relationships.stock_location.data.id
+                    );
+                    return (
+                      <li key={index}>
+                        {item.attributes.quantity} available
+                        {location && ` (${location.attributes.name})`}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
           </div>
         </div>
       )}
