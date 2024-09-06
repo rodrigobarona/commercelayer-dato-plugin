@@ -41,11 +41,7 @@ export type ValueProps = {
   onReset: () => void;
 };
 
-const fetchVariations = async (
-  barcode: string,
-  harvestYear: string,
-  bottleCapacity: string
-): Promise<Variation[]> => {
+const fetchVariations = async (barcode: string, harvestYear: string, bottleCapacity: string): Promise<Variation[]> => {
   const query = `
     query {
       allProductVariationBarcodes(filter: {
@@ -96,10 +92,9 @@ const fetchVariations = async (
     }
 
     // Filter the results on the client side
-    const filteredVariations = data.data.allProductVariationBarcodes.filter(
-      (variation: ProductVariationBarcode) =>
-        variation.vintageYear === parseInt(harvestYear) &&
-        variation.capacity.capacityValue === bottleCapacity + " mL"
+    const filteredVariations = data.data.allProductVariationBarcodes.filter((variation: ProductVariationBarcode) => 
+      variation.vintageYear === parseInt(harvestYear) &&
+      variation.capacity.capacityValue === bottleCapacity + " mL"
     );
 
     console.log("Filtered Variations:", filteredVariations);
@@ -131,34 +126,39 @@ export default function Value({ value, onReset }: ValueProps) {
   );
 
   const { product, status } = useStore(
-    useCallback((state) => state.getProduct(value), [value])
+    useCallback((state) => state.getProduct(value.split(',')[0]), [value])
   );
 
   const fetchProductByCode = useStore(fetchProductByCodeSelector);
 
   useEffect(() => {
-    fetchProductByCode(client, value);
+    fetchProductByCode(client, value.split(',')[0]);
   }, [client, value, fetchProductByCode]);
 
   useEffect(() => {
     if (product && product.attributes.metadata) {
       const barcode = product.attributes.metadata.Barcode;
       const harvestYear = product.attributes.metadata.HarvestYear?.toString();
-      const bottleCapacity =
-        product.attributes.metadata.BottleCapacity?.split(" ")[0]; // Extract only the number
+      const bottleCapacity = product.attributes.metadata.BottleCapacity?.split(" ")[0]; // Extract only the number
 
       if (barcode && harvestYear && bottleCapacity) {
-        fetchVariations(barcode, harvestYear, bottleCapacity).then(
-          setVariations
-        );
+        fetchVariations(barcode, harvestYear, bottleCapacity).then(setVariations);
       }
     }
   }, [product]);
 
-  console.log("Variations:", variations); // Add this line to check the variations state
+  useEffect(() => {
+    // Set the initial selected variation if it exists in the value
+    const [, initialVariationId] = value.split(',');
+    if (initialVariationId) {
+      setSelectedVariation(initialVariationId);
+    }
+  }, [value]);
 
   const handleVariationChange = (variationId: string) => {
     setSelectedVariation(variationId);
+    const newValue = `${value.split(',')[0]},${variationId}`;
+    ctx.setFieldValue(ctx.fieldPath, newValue);
   };
 
   const renderMetadata = (metadata: Record<string, string>) => {
@@ -215,8 +215,7 @@ export default function Value({ value, onReset }: ValueProps) {
                 <ul>
                   {product.pricing_list.map((price, index) => (
                     <li key={index}>
-                      {price.attributes.formatted_amount} (
-                      {price.attributes.name})
+                      {price.attributes.formatted_amount} ({price.attributes.name})
                     </li>
                   ))}
                 </ul>
@@ -246,7 +245,12 @@ export default function Value({ value, onReset }: ValueProps) {
                 <strong>Variations:</strong>
                 <div className={s["variations-list"]}>
                   {variations.map((variant: Variation) => (
-                    <label key={variant.id} className={s["variation-item"]}>
+                    <label 
+                      key={variant.id} 
+                      className={classNames(s["variation-item"], {
+                        [s["variation-item--selected"]]: selectedVariation === variant.id
+                      })}
+                    >
                       <input
                         type="radio"
                         name="variation"
