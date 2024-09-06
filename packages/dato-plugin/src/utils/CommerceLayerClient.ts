@@ -24,6 +24,7 @@ export type Product = {
     stock_items: any[];
   };
   pricing_list: any;
+  stock_items: any[]; // Add this line
 };
 
 export default class CommerceLayerClient {
@@ -64,6 +65,11 @@ export default class CommerceLayerClient {
     return result.data;
   }
 
+  async productStock(sku: string): Promise<any[]> {
+    const result = await this.get(`/api/skus/${sku}/stock_items`, {});
+    return result.data;
+  }
+
   async productByCode(code: string): Promise<Product> {
     const result = await this.get("/api/skus", {
       "filter[q][code_eq]": code,
@@ -73,7 +79,11 @@ export default class CommerceLayerClient {
       throw new Error("Missing SKU");
     }
 
-    return result.data[0];
+    const product = result.data[0];
+    product.pricing_list = await this.productPricings(product.id);
+    product.stock_items = await this.productStock(product.id);
+
+    return product;
   }
 
   async getToken() {

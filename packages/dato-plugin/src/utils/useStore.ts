@@ -71,11 +71,6 @@ const useStore = create<State>(
           try {
             const product = await client.productByCode(code);
 
-            if (product !== null) {
-              product.pricing_list = await client.productPricings(product.id);
-              console.log("---", product["pricing_list"]);
-            }
-
             set((state) => {
               state.products[code].result = product;
               state.products[code].status = "success";

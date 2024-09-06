@@ -103,13 +103,18 @@ export default function Value({ value, onReset }: ValueProps) {
             )}
             {renderMetadata(product.attributes.metadata)}
 
-            {product.pricing_list?.length > 0 &&
-              (
-                <div>
-                  <strong>Price:</strong> {product.pricing_list[0].attributes.formatted_amount}
-                </div>
-              )
-            }
+            {product.pricing_list?.length > 0 && (
+              <div className={s["product__producttype"]}>
+                <strong>Price:</strong>{" "}
+                {product.pricing_list[0].attributes.formatted_amount}
+              </div>
+            )}
+            {product.stock_items?.length > 0 && (
+              <div className={s["product__producttype"]}>
+                <strong>Stock:</strong>{" "}
+                {product.stock_items[0].attributes.quantity} available
+              </div>
+            )}
           </div>
         </div>
       )}
