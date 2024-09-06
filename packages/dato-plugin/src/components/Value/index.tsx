@@ -106,15 +106,26 @@ export default function Value({ value, onReset }: ValueProps) {
             {product.pricing_list?.length > 0 && (
               <div className={s["product__producttype"]}>
                 <strong>Price:</strong>{" "}
-                {product.pricing_list[0].attributes.formatted_amount}
+                {product.pricing_list[0].attributes.formatted_amount} (
+                {product.pricing_list[0].attributes.name})
               </div>
             )}
-            {product.stock_items?.length > 0 && (
-              <div className={s["product__producttype"]}>
-                <strong>Stock:</strong>{" "}
-                {product.stock_items[0].attributes.quantity} available
-              </div>
-            )}
+            {product.stock_items?.length > 0 &&
+              product.stock_locations?.length > 0 && (
+                <div className={s["product__producttype"]}>
+                  <strong>Stock:</strong>{" "}
+                  {product.stock_items[0].attributes.quantity} available (
+                  {
+                    product.stock_locations.find(
+                      (loc) =>
+                        loc.id ===
+                        product.stock_items[0].relationships.stock_location.data
+                          .id
+                    )?.attributes.name
+                  }
+                  )
+                </div>
+              )}
           </div>
         </div>
       )}

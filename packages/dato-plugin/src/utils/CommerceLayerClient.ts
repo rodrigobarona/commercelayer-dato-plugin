@@ -5,6 +5,35 @@ export type Metadata = {
   [key: string]: string;
 };
 
+export type PriceList = {
+  id: string;
+  attributes: {
+    name: string;
+    formatted_amount: string;
+  };
+};
+
+export type StockItem = {
+  id: string;
+  attributes: {
+    quantity: number;
+  };
+  relationships: {
+    stock_location: {
+      data: {
+        id: string;
+      };
+    };
+  };
+};
+
+export type StockLocation = {
+  id: string;
+  attributes: {
+    name: string;
+  };
+};
+
 export type Product = {
   id: string;
   attributes: {
@@ -23,8 +52,9 @@ export type Product = {
     prices: string[];
     stock_items: any[];
   };
-  pricing_list: any;
-  stock_items: any[]; // Add this line
+  pricing_list: PriceList[];
+  stock_items: StockItem[];
+  stock_locations: StockLocation[];
 };
 
 export default class CommerceLayerClient {
@@ -50,10 +80,20 @@ export default class CommerceLayerClient {
     this.token = null;
   }
 
-  async productPricings(sku: string): Promise<any[]> {
-    const result = await this.get(`/api/skus/${sku}/prices`, {});
-
-    return result.data;
+  async productPricings(sku: string): Promise<PriceList[]> {
+    const result = await this.get(`/api/skus/${sku}/prices`, {
+      include: 'price_list'
+    });
+    
+    return result.data.map((price: any) => ({
+      id: price.id,
+      attributes: {
+        formatted_amount: price.attributes.formatted_amount,
+        name: result.included.find((inc: any) => 
+          inc.type === 'price_lists' && inc.id === price.relationships.price_list.data.id
+        )?.attributes.name || 'Unknown'
+      }
+    }));
   }
 
   async productsMatching(query: string): Promise<Product[]> {
@@ -65,9 +105,17 @@ export default class CommerceLayerClient {
     return result.data;
   }
 
-  async productStock(sku: string): Promise<any[]> {
-    const result = await this.get(`/api/skus/${sku}/stock_items`, {});
-    return result.data;
+  async productStock(
+    sku: string
+  ): Promise<{ items: StockItem[]; locations: StockLocation[] }> {
+    const itemsResult = await this.get(`/api/skus/${sku}/stock_items`, {
+      include: "stock_location",
+    });
+    const items = itemsResult.data;
+    const locations = itemsResult.included.filter(
+      (inc: any) => inc.type === "stock_locations"
+    );
+    return { items, locations };
   }
 
   async productByCode(code: string): Promise<Product> {
@@ -81,7 +129,9 @@ export default class CommerceLayerClient {
 
     const product = result.data[0];
     product.pricing_list = await this.productPricings(product.id);
-    product.stock_items = await this.productStock(product.id);
+    const { items, locations } = await this.productStock(product.id);
+    product.stock_items = items;
+    product.stock_locations = locations;
 
     return product;
   }
