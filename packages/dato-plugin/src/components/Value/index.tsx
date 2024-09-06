@@ -114,6 +114,7 @@ const fetchVariations = async (
 export default function Value({ value, onReset }: ValueProps) {
   const ctx = useCtx<RenderFieldExtensionCtx>();
   const [variations, setVariations] = useState<Variation[]>([]);
+  const [selectedVariation, setSelectedVariation] = useState<string | null>(null);
 
   const { organizationName, baseEndpoint, clientId, clientSecret } =
     normalizeConfig(ctx.plugin.attributes.parameters);
@@ -155,6 +156,10 @@ export default function Value({ value, onReset }: ValueProps) {
   }, [product]);
 
   console.log("Variations:", variations); // Add this line to check the variations state
+
+  const handleVariationChange = (variationId: string) => {
+    setSelectedVariation(variationId);
+  };
 
   const renderMetadata = (metadata: Record<string, string>) => {
     return Object.entries(metadata).map(([key, value]) => (
@@ -239,21 +244,28 @@ export default function Value({ value, onReset }: ValueProps) {
             {variations.length > 0 && (
               <div className={s["product__producttype"]}>
                 <strong>Variations:</strong>
-                <ul>
+                <div className={s["variations-list"]}>
                   {variations.map((variant: Variation) => (
-                    <li key={variant.id}>
+                    <label key={variant.id} className={s["variation-item"]}>
+                      <input
+                        type="radio"
+                        name="variation"
+                        value={variant.id}
+                        checked={selectedVariation === variant.id}
+                        onChange={() => handleVariationChange(variant.id)}
+                        className={s["variation-radio"]}
+                      />
                       <img
-                        src={
-                          variant.variantImageGallery[0]?.responsiveImage.src
-                        }
+                        src={variant.variantImageGallery[0]?.responsiveImage.src}
                         alt={variant.variantType.variation}
                         width="50"
                         height="50"
+                        className={s["variation-image"]}
                       />
-                      {variant.variantType.variation} (ID: {variant.id})
-                    </li>
+                      <span className={s["variation-name"]}>{variant.variantType.variation}</span>
+                    </label>
                   ))}
-                </ul>
+                </div>
               </div>
             )}
           </div>
