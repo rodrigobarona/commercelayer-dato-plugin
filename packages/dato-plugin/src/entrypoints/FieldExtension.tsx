@@ -16,14 +16,10 @@ export default function Main({ ctx }: PropTypes) {
     ctx.setFieldValue(ctx.fieldPath, product.attributes.code)
   }
 
-  const handleReset = () => {
-    ctx.setFieldValue(ctx.fieldPath, null)
-  }
-
   return (
     <Canvas ctx={ctx}>
       {value ? (
-        <Value value={value} onReset={handleReset} />
+        <Value value={value} />
       ) : (
         <Empty onSelect={handleSelect} />
       )}

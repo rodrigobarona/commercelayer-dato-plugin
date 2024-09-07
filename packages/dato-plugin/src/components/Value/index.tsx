@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { normalizeConfig } from "../../types";
-import { useCtx, Button } from "datocms-react-ui";
+import { useCtx } from "datocms-react-ui";
 import { RenderFieldExtensionCtx } from "datocms-plugin-sdk";
 import CommerceLayerClient from "../../utils/CommerceLayerClient";
 import useStore, { State } from "../../utils/useStore";
@@ -9,7 +9,6 @@ import classNames from "classnames";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faExternalLinkAlt,
-  faTimesCircle,
   faExclamationTriangle,
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -41,7 +40,6 @@ interface ProductVariationBarcode {
 
 export type ValueProps = {
   value: string;
-  onReset: () => void;
 };
 
 const fetchVariations = async (
@@ -116,7 +114,7 @@ const fetchVariations = async (
   }
 };
 
-export default function Value({ value, onReset }: ValueProps) {
+export default function Value({ value }: ValueProps) {
   const ctx = useCtx<RenderFieldExtensionCtx>();
   const client = useMemo(
     () => new CommerceLayerClient(normalizeConfig(ctx.plugin.attributes.parameters)),
@@ -129,8 +127,7 @@ export default function Value({ value, onReset }: ValueProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
 
-  const { organizationName, baseEndpoint, clientId, clientSecret } =
-    normalizeConfig(ctx.plugin.attributes.parameters);
+  const { organizationName } = normalizeConfig(ctx.plugin.attributes.parameters);
 
   const { product, status } = useStore(
     useCallback((state) => state.getProduct(value.split(",")[0]), [value])
@@ -271,14 +268,6 @@ export default function Value({ value, onReset }: ValueProps) {
       )}
       {product && (
         <div className={s["product"]}>
-          {product.attributes.image_url && (
-            <div
-              className={s["product__image"]}
-              style={{
-                backgroundImage: `url(${product.attributes.image_url})`,
-              }}
-            />
-          )}
           <div className={s["product__info"]}>
             <div className={s["product__title"]}>
               <a
@@ -384,15 +373,6 @@ export default function Value({ value, onReset }: ValueProps) {
           </div>
         </div>
       )}
-      <Button
-        onClick={onReset}
-        fullWidth
-        buttonType="negative"
-        buttonSize="s"
-        leftIcon={<FontAwesomeIcon icon={faTimesCircle} />}
-      >
-        Reset
-      </Button>
     </div>
   );
 }
