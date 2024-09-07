@@ -12,13 +12,16 @@ import {
   faTimesCircle,
 } from "@fortawesome/free-solid-svg-icons";
 
+interface Image {
+  id: string;
+  responsiveImage: {
+    src: string;
+  };
+}
+
 interface Variation {
   id: string;
-  variantImageGallery: Array<{
-    responsiveImage: {
-      src: string;
-    };
-  }>;
+  variantImageGallery: Image[];
   variantType: {
     variation: string;
   };
@@ -110,6 +113,7 @@ export default function Value({ value, onReset }: ValueProps) {
   const ctx = useCtx<RenderFieldExtensionCtx>();
   const [variations, setVariations] = useState<Variation[]>([]);
   const [selectedVariation, setSelectedVariation] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const { organizationName, baseEndpoint, clientId, clientSecret } =
     normalizeConfig(ctx.plugin.attributes.parameters);
@@ -148,16 +152,20 @@ export default function Value({ value, onReset }: ValueProps) {
   }, [product]);
 
   useEffect(() => {
-    // Set the initial selected variation if it exists in the value
-    const [, initialVariationId] = value.split(',');
+    // Set the initial selected variation and image if they exist in the value
+    const [, initialVariationId, initialImageId] = value.split(',');
     if (initialVariationId) {
       setSelectedVariation(initialVariationId);
     }
+    if (initialImageId) {
+      setSelectedImage(initialImageId);
+    }
   }, [value]);
 
-  const handleVariationChange = (variationId: string) => {
+  const handleImageChange = (variationId: string, imageId: string) => {
     setSelectedVariation(variationId);
-    const newValue = `${value.split(',')[0]},${variationId}`;
+    setSelectedImage(imageId);
+    const newValue = `${value.split(',')[0]},${variationId},${imageId}`;
     ctx.setFieldValue(ctx.fieldPath, newValue);
   };
 
@@ -245,29 +253,35 @@ export default function Value({ value, onReset }: ValueProps) {
                 <strong>Variations:</strong>
                 <div className={s["variations-list"]}>
                   {variations.map((variant: Variation) => (
-                    <label 
-                      key={variant.id} 
-                      className={classNames(s["variation-item"], {
-                        [s["variation-item--selected"]]: selectedVariation === variant.id
-                      })}
-                    >
-                      <input
-                        type="radio"
-                        name="variation"
-                        value={variant.id}
-                        checked={selectedVariation === variant.id}
-                        onChange={() => handleVariationChange(variant.id)}
-                        className={s["variation-radio"]}
-                      />
-                      <img
-                        src={variant.variantImageGallery[0]?.responsiveImage.src}
-                        alt={variant.variantType.variation}
-                        width="50"
-                        height="50"
-                        className={s["variation-image"]}
-                      />
-                      <span className={s["variation-name"]}>{variant.variantType.variation}</span>
-                    </label>
+                    <div key={variant.id} className={s["variation-group"]}>
+                      <h4>{variant.variantType.variation}</h4>
+                      <div className={s["variation-images"]}>
+                        {variant.variantImageGallery.map((image: Image) => (
+                          <label 
+                            key={image.id} 
+                            className={classNames(s["variation-item"], {
+                              [s["variation-item--selected"]]: selectedVariation === variant.id && selectedImage === image.id
+                            })}
+                          >
+                            <input
+                              type="radio"
+                              name="variation"
+                              value={`${variant.id},${image.id}`}
+                              checked={selectedVariation === variant.id && selectedImage === image.id}
+                              onChange={() => handleImageChange(variant.id, image.id)}
+                              className={s["variation-radio"]}
+                            />
+                            <img
+                              src={image.responsiveImage.src}
+                              alt={`${variant.variantType.variation} - Image ${image.id}`}
+                              width="50"
+                              height="50"
+                              className={s["variation-image"]}
+                            />
+                          </label>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
