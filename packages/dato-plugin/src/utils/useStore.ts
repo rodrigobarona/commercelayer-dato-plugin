@@ -21,7 +21,8 @@ export type State = {
   fetchProductByCode(client: CommerceLayerClient, code: string): Promise<void>;
   fetchProductsMatching(
     client: CommerceLayerClient,
-    query: string
+    query: string,
+    priceListId: string | null
   ): Promise<void>;
 };
 
@@ -82,14 +83,14 @@ const useStore = create<State>(
             });
           }
         },
-        async fetchProductsMatching(client, query) {
+        async fetchProductsMatching(client, query, priceListId = null) {
           set((state) => {
             state.searches[query] = state.searches[query] || { result: [] };
             state.searches[query].status = "loading";
             state.query = query;
           });
           try {
-            const products = await client.productsMatching(query);
+            const products = await client.productsMatching(query, priceListId);
 
             set((state) => {
               state.searches[query].status = "success";
