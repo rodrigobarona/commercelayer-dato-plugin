@@ -96,15 +96,12 @@ export default class CommerceLayerClient {
     }));
   }
 
-  async productsMatching(query: string, priceListId: string | null = null): Promise<Product[]> {
-    const params: any = {
+  async productsMatching(query: string): Promise<Product[]> {
+    const result = await this.get("/api/skus", {
       "filter[q][code_or_name_or_description_cont]": query,
       "page[size]": 24,
-    };
-    if (priceListId) {
-      params["filter[price_list_id_eq]"] = priceListId;
-    }
-    const result = await this.get("/api/skus", params);
+    });
+
     return result.data;
   }
 
@@ -195,13 +192,5 @@ export default class CommerceLayerClient {
     const body = await response.json();
 
     return body;
-  }
-
-  async fetchPriceLists(): Promise<Array<{ id: string; name: string }>> {
-    const result = await this.get("/api/price_lists");
-    return result.data.map((priceList: any) => ({
-      id: priceList.id,
-      name: priceList.attributes.name,
-    }));
   }
 }

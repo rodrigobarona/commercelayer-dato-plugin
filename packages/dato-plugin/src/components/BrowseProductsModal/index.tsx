@@ -24,19 +24,13 @@ import classNames from "classnames";
 
 const currentSearchSelector = (state: State) => state.getCurrentSearch();
 const currentFetchProductsMatchingSelector = (state: State) =>
-  (client: CommerceLayerClient, query: string, priceListId: string | null) => state.fetchProductsMatching(client, query, priceListId);
+  state.fetchProductsMatching;
 
 export default function BrowseProductsModal({ ctx }: { ctx: RenderModalCtx }) {
   const performSearch = useStore(currentFetchProductsMatchingSelector);
   const { query, status, products } = useStore(currentSearchSelector);
 
   const [sku, setSku] = useState<string>("");
-  const [priceLists, setPriceLists] = useState<
-    Array<{ id: string; name: string }>
-  >([]);
-  const [selectedPriceList, setSelectedPriceList] = useState<string | null>(
-    null
-  );
 
   const { organizationName, baseEndpoint, clientId, clientSecret } =
     normalizeConfig(ctx.plugin.attributes.parameters);
@@ -65,24 +59,12 @@ export default function BrowseProductsModal({ ctx }: { ctx: RenderModalCtx }) {
   }, [organizationName, baseEndpoint, clientId, clientSecret]);
 
   useEffect(() => {
-    const fetchPriceLists = async () => {
-      try {
-        const lists = await client.fetchPriceLists();
-        setPriceLists(lists);
-      } catch (error) {
-        console.error("Failed to fetch price lists:", error);
-      }
-    };
-    fetchPriceLists();
-  }, [client]);
-
-  useEffect(() => {
-    performSearch(client, query, selectedPriceList);
-  }, [performSearch, query, client, selectedPriceList]);
+    performSearch(client, query);
+  }, [performSearch, query, client]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    performSearch(client, sku, selectedPriceList);
+    performSearch(client, sku);
   };
 
   return (
@@ -123,33 +105,17 @@ export default function BrowseProductsModal({ ctx }: { ctx: RenderModalCtx }) {
                   )
                 }
               >
-                {selectedPriceList
-                  ? priceLists.find((pl) => pl.id === selectedPriceList)?.name
-                  : "List prices"}
+                List prices
               </Button>
             )}
           >
             <DropdownMenu>
-              {priceLists.map((priceList) => (
-                <DropdownOption
-                  key={priceList.id}
-                  onClick={() => {
-                    setSelectedPriceList(priceList.id);
-                    performSearch(client, sku, priceList.id);
-                  }}
-                >
-                  {priceList.name}
-                </DropdownOption>
-              ))}
-              <DropdownSeparator />
-              <DropdownOption
-                onClick={() => {
-                  setSelectedPriceList(null);
-                  performSearch(client, sku, null);
-                }}
-              >
-                All prices
+              <DropdownOption onClick={() => { }}>Reserva 1500</DropdownOption>
+              <DropdownOption onClick={() => { }}>
+                Empregados Sogrape Portugal
               </DropdownOption>
+              <DropdownSeparator />
+              <DropdownOption onClick={() => { }}>All prices</DropdownOption>
             </DropdownMenu>
           </Dropdown>
         </div>
