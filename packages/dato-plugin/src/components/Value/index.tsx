@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { normalizeConfig } from "../../types";
 import { useCtx } from "datocms-react-ui";
 import { RenderFieldExtensionCtx } from "datocms-plugin-sdk";
@@ -17,7 +17,11 @@ import "slick-carousel/slick/slick-theme.css";
 
 interface Variation {
   id: string;
-  variantImageGallery: Image[];
+  variantImageGallery: Array<{
+    responsiveImage: {
+      src: string;
+    };
+  }>;
   variantType: {
     variation: string;
   };
@@ -192,12 +196,6 @@ export default function Value({ value, onReset }: ValueProps) {
 
   const fetchProductByCode = useStore(fetchProductByCodeSelector);
 
-  const updateFieldValue = useCallback((variationId: string | null, imageId: string | null = null) => {
-    const [sku] = value.split(",");
-    const newValue = [sku, variationId, imageId].filter(Boolean).join(",");
-    ctx.setFieldValue(ctx.fieldPath, newValue);
-  }, [value, ctx]);
-
   useEffect(() => {
     fetchProductByCode(client, value.split(",")[0]);
   }, [client, value, fetchProductByCode]);
@@ -211,37 +209,39 @@ export default function Value({ value, onReset }: ValueProps) {
 
       if (barcode && harvestYear && bottleCapacity) {
         fetchVariations(barcode, harvestYear, bottleCapacity).then(
-          (fetchedVariations) => {
-            setVariations(fetchedVariations);
-            
-            // Select first variation and image by default
-            if (fetchedVariations.length > 0) {
-              const firstVariation = fetchedVariations[0];
-              setSelectedVariation(firstVariation.id);
-              if (firstVariation.variantImageGallery.length > 0) {
-                setSelectedImageId('0'); // Use '0' as the first image ID
-                updateFieldValue(firstVariation.id, '0');
-              }
-            }
-          }
+          setVariations
         );
       }
     }
-  }, [product, updateFieldValue]);
+  }, [product]);
 
-  const handleVariationChange = useCallback((variationId: string) => {
+  useEffect(() => {
+    // Set the initial selected variation if it exists in the value
+    const [, initialVariationId] = value.split(",");
+    if (initialVariationId) {
+      setSelectedVariation(initialVariationId);
+    }
+  }, [value]);
+
+  const handleVariationChange = (variationId: string) => {
     setSelectedVariation(variationId);
-    setSelectedImageId('0'); // Reset to first image when variation changes
-    updateFieldValue(variationId, '0');
-  }, [updateFieldValue]);
+    setSelectedImageId(null); // Reset selected image when variation changes
+    updateFieldValue(variationId);
+  };
 
-  const handleImageChange = useCallback((imageId: string, variationId: string) => {
+  const handleImageChange = (imageId: string, variationId: string) => {
     setSelectedImageId(imageId);
     if (selectedVariation !== variationId) {
       setSelectedVariation(variationId);
     }
     updateFieldValue(variationId, imageId);
-  }, [selectedVariation, updateFieldValue]);
+  };
+
+  const updateFieldValue = (variationId: string | null, imageId: string | null = null) => {
+    const [sku] = value.split(",");
+    const newValue = [sku, variationId, imageId].filter(Boolean).join(",");
+    ctx.setFieldValue(ctx.fieldPath, newValue);
+  };
 
   const renderMetadata = (metadata: Record<string, string>) => {
     return Object.entries(metadata).map(([key, value]) => (
