@@ -11,6 +11,9 @@ import {
   faExternalLinkAlt,
   faTimesCircle,
 } from "@fortawesome/free-solid-svg-icons";
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 
 interface Variation {
   id: string;
@@ -41,7 +44,65 @@ export type ValueProps = {
   onReset: () => void;
 };
 
-const fetchVariations = async (barcode: string, harvestYear: string, bottleCapacity: string): Promise<Variation[]> => {
+interface Image {
+  responsiveImage: {
+    src: string;
+  };
+}
+
+interface VariationImageCarouselProps {
+  images: Image[];
+}
+
+const VariationImageCarousel: React.FC<VariationImageCarouselProps> = ({
+  images,
+}) => {
+  console.log("Carousel images:", images);
+
+  const settings = {
+    dots: true,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    adaptiveHeight: true,
+  };
+
+  return (
+    <div className={s["variation-carousel"]}>
+      <Slider {...settings}>
+        {images.map((image, index) => (
+          <div key={index} className={s["variation-slide"]}>
+            {image?.responsiveImage?.src ? (
+              <img
+                src={image.responsiveImage.src}
+                alt=""
+                className={s["variation-image"]}
+                onError={(e) => {
+                  console.error(
+                    "Image failed to load:",
+                    image.responsiveImage.src
+                  );
+                  e.currentTarget.style.display = "none";
+                }}
+              />
+            ) : (
+              <div className={s["variation-image-placeholder"]}>
+                No image available
+              </div>
+            )}
+          </div>
+        ))}
+      </Slider>
+    </div>
+  );
+};
+
+const fetchVariations = async (
+  barcode: string,
+  harvestYear: string,
+  bottleCapacity: string
+): Promise<Variation[]> => {
   const query = `
     query {
       allProductVariationBarcodes(filter: {
@@ -56,7 +117,7 @@ const fetchVariations = async (barcode: string, harvestYear: string, bottleCapac
         productVariant {
           id
           variantImageGallery {
-            responsiveImage(imgixParams: {fit: fillmax, h: "100", w: "100", q: "60", auto: format}) {
+            responsiveImage(imgixParams: {fit: fillmax, h: "200", w: "200", q: "80", auto: format}) {
               src
             }
           }
@@ -92,9 +153,10 @@ const fetchVariations = async (barcode: string, harvestYear: string, bottleCapac
     }
 
     // Filter the results on the client side
-    const filteredVariations = data.data.allProductVariationBarcodes.filter((variation: ProductVariationBarcode) => 
-      variation.vintageYear === parseInt(harvestYear) &&
-      variation.capacity.capacityValue === bottleCapacity + " mL"
+    const filteredVariations = data.data.allProductVariationBarcodes.filter(
+      (variation: ProductVariationBarcode) =>
+        variation.vintageYear === parseInt(harvestYear) &&
+        variation.capacity.capacityValue === bottleCapacity + " mL"
     );
 
     console.log("Filtered Variations:", filteredVariations);
@@ -109,7 +171,9 @@ const fetchVariations = async (barcode: string, harvestYear: string, bottleCapac
 export default function Value({ value, onReset }: ValueProps) {
   const ctx = useCtx<RenderFieldExtensionCtx>();
   const [variations, setVariations] = useState<Variation[]>([]);
-  const [selectedVariation, setSelectedVariation] = useState<string | null>(null);
+  const [selectedVariation, setSelectedVariation] = useState<string | null>(
+    null
+  );
 
   const { organizationName, baseEndpoint, clientId, clientSecret } =
     normalizeConfig(ctx.plugin.attributes.parameters);
@@ -126,30 +190,33 @@ export default function Value({ value, onReset }: ValueProps) {
   );
 
   const { product, status } = useStore(
-    useCallback((state) => state.getProduct(value.split(',')[0]), [value])
+    useCallback((state) => state.getProduct(value.split(",")[0]), [value])
   );
 
   const fetchProductByCode = useStore(fetchProductByCodeSelector);
 
   useEffect(() => {
-    fetchProductByCode(client, value.split(',')[0]);
+    fetchProductByCode(client, value.split(",")[0]);
   }, [client, value, fetchProductByCode]);
 
   useEffect(() => {
     if (product && product.attributes.metadata) {
       const barcode = product.attributes.metadata.Barcode;
       const harvestYear = product.attributes.metadata.HarvestYear?.toString();
-      const bottleCapacity = product.attributes.metadata.BottleCapacity?.split(" ")[0]; // Extract only the number
+      const bottleCapacity =
+        product.attributes.metadata.BottleCapacity?.split(" ")[0]; // Extract only the number
 
       if (barcode && harvestYear && bottleCapacity) {
-        fetchVariations(barcode, harvestYear, bottleCapacity).then(setVariations);
+        fetchVariations(barcode, harvestYear, bottleCapacity).then(
+          setVariations
+        );
       }
     }
   }, [product]);
 
   useEffect(() => {
     // Set the initial selected variation if it exists in the value
-    const [, initialVariationId] = value.split(',');
+    const [, initialVariationId] = value.split(",");
     if (initialVariationId) {
       setSelectedVariation(initialVariationId);
     }
@@ -157,7 +224,7 @@ export default function Value({ value, onReset }: ValueProps) {
 
   const handleVariationChange = (variationId: string) => {
     setSelectedVariation(variationId);
-    const newValue = `${value.split(',')[0]},${variationId}`;
+    const newValue = `${value.split(",")[0]},${variationId}`;
     ctx.setFieldValue(ctx.fieldPath, newValue);
   };
 
@@ -215,7 +282,8 @@ export default function Value({ value, onReset }: ValueProps) {
                 <ul>
                   {product.pricing_list.map((price, index) => (
                     <li key={index}>
-                      {price.attributes.formatted_amount} ({price.attributes.name})
+                      {price.attributes.formatted_amount} (
+                      {price.attributes.name})
                     </li>
                   ))}
                 </ul>
@@ -244,31 +312,37 @@ export default function Value({ value, onReset }: ValueProps) {
               <div className={s["product__producttype"]}>
                 <strong>Variations:</strong>
                 <div className={s["variations-list"]}>
-                  {variations.map((variant: Variation) => (
-                    <label 
-                      key={variant.id} 
-                      className={classNames(s["variation-item"], {
-                        [s["variation-item--selected"]]: selectedVariation === variant.id
-                      })}
-                    >
-                      <input
-                        type="radio"
-                        name="variation"
-                        value={variant.id}
-                        checked={selectedVariation === variant.id}
-                        onChange={() => handleVariationChange(variant.id)}
-                        className={s["variation-radio"]}
-                      />
-                      <img
-                        src={variant.variantImageGallery[0]?.responsiveImage.src}
-                        alt={variant.variantType.variation}
-                        width="50"
-                        height="50"
-                        className={s["variation-image"]}
-                      />
-                      <span className={s["variation-name"]}>{variant.variantType.variation}</span>
-                    </label>
-                  ))}
+                  {variations.map((variant: Variation) => {
+                    console.log("Variant:", variant);
+                    console.log(
+                      "Variant image gallery:",
+                      variant.variantImageGallery
+                    );
+                    return (
+                      <label
+                        key={variant.id}
+                        className={classNames(s["variation-item"], {
+                          [s["variation-item--selected"]]:
+                            selectedVariation === variant.id,
+                        })}
+                      >
+                        <input
+                          type="radio"
+                          name="variation"
+                          value={variant.id}
+                          checked={selectedVariation === variant.id}
+                          onChange={() => handleVariationChange(variant.id)}
+                          className={s["variation-radio"]}
+                        />
+                        <VariationImageCarousel
+                          images={variant.variantImageGallery}
+                        />
+                        <span className={s["variation-name"]}>
+                          {variant.variantType.variation}
+                        </span>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
             )}

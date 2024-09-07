@@ -24,6 +24,8 @@
     "react-dom": "^18.2.0",
     "react-final-form": "^6.5.9",
     "react-scripts": "5.0.1",
+    "react-slick": "^0.30.2",
+    "slick-carousel": "^1.8.1",
     "typescript": "^5.3.3",
     "zustand": "^4.5.0"
   },
@@ -61,6 +63,7 @@
   "devDependencies": {
     "@types/lodash-es": "^4.17.12",
     "@types/qs": "^6.9.11",
+    "@types/react-slick": "^0.23.13",
     "cross-env": "^7.0.3"
   },
   "files": [
