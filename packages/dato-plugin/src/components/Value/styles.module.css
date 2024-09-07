@@ -132,8 +132,8 @@
 }
 
 .variation-image {
-  width: 50px;
-  height: 50px;
+  width: 150px;
+  height: 150px;
   object-fit: cover;
   border: 2px solid transparent;
   border-radius: 5px;
@@ -163,6 +163,10 @@
 .variation-item {
   position: relative;
   cursor: pointer;
+  width: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .variation-radio {
@@ -171,13 +175,73 @@
 }
 
 .variation-image {
-  width: 50px;
-  height: 50px;
-  object-fit: cover;
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
   border: 2px solid transparent;
   transition: border-color 0.2s;
 }
 
 .variation-item--selected .variation-image {
   border-color: #007bff;
+}
+
+.variation-image-alt {
+  font-size: 10px;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  margin-top: 4px;
+}
+
+/* Tooltip styles */
+.variation-item {
+  position: relative;
+}
+
+.variation-item .variation-image-alt {
+  visibility: visible;
+  width: 120px;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -60px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.variation-item:hover .variation-image-alt {
+  visibility: visible;
+  opacity: 1;
+}
+
+.variation-image-tooltip {
+  visibility: hidden;
+  width: auto;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 10px;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.3s;
+  white-space: nowrap;
+}
+
+.variation-item:hover .variation-image-tooltip {
+  visibility: visible;
+  opacity: 1;
 }

@@ -16,6 +16,7 @@ interface Image {
   id: string;
   responsiveImage: {
     src: string;
+    alt: string;
   };
 }
 
@@ -44,7 +45,11 @@ export type ValueProps = {
   onReset: () => void;
 };
 
-const fetchVariations = async (barcode: string, harvestYear: string, bottleCapacity: string): Promise<Variation[]> => {
+const fetchVariations = async (
+  barcode: string,
+  harvestYear: string,
+  bottleCapacity: string
+): Promise<Variation[]> => {
   const query = `
     query {
       allProductVariationBarcodes(filter: {
@@ -59,8 +64,10 @@ const fetchVariations = async (barcode: string, harvestYear: string, bottleCapac
         productVariant {
           id
           variantImageGallery {
-            responsiveImage(imgixParams: {fit: fillmax, h: "100", w: "100", q: "60", auto: format}) {
+          id
+            responsiveImage(imgixParams: {fit: fillmax, h: "200", w: "200", q: "90", auto: format}) {
               src
+              alt
             }
           }
           variantType {
@@ -95,9 +102,10 @@ const fetchVariations = async (barcode: string, harvestYear: string, bottleCapac
     }
 
     // Filter the results on the client side
-    const filteredVariations = data.data.allProductVariationBarcodes.filter((variation: ProductVariationBarcode) => 
-      variation.vintageYear === parseInt(harvestYear) &&
-      variation.capacity.capacityValue === bottleCapacity + " mL"
+    const filteredVariations = data.data.allProductVariationBarcodes.filter(
+      (variation: ProductVariationBarcode) =>
+        variation.vintageYear === parseInt(harvestYear) &&
+        variation.capacity.capacityValue === bottleCapacity + " mL"
     );
 
     console.log("Filtered Variations:", filteredVariations);
@@ -130,42 +138,47 @@ export default function Value({ value, onReset }: ValueProps) {
   );
 
   const { product, status } = useStore(
-    useCallback((state) => state.getProduct(value.split(',')[0]), [value])
+    useCallback((state) => state.getProduct(value.split(",")[0]), [value])
   );
 
   const fetchProductByCode = useStore(fetchProductByCodeSelector);
 
   useEffect(() => {
-    fetchProductByCode(client, value.split(',')[0]);
+    fetchProductByCode(client, value.split(",")[0]);
   }, [client, value, fetchProductByCode]);
 
   useEffect(() => {
     if (product && product.attributes.metadata) {
       const barcode = product.attributes.metadata.Barcode;
       const harvestYear = product.attributes.metadata.HarvestYear?.toString();
-      const bottleCapacity = product.attributes.metadata.BottleCapacity?.split(" ")[0]; // Extract only the number
+      const bottleCapacity =
+        product.attributes.metadata.BottleCapacity?.split(" ")[0]; // Extract only the number
 
       if (barcode && harvestYear && bottleCapacity) {
-        fetchVariations(barcode, harvestYear, bottleCapacity).then(setVariations);
+        fetchVariations(barcode, harvestYear, bottleCapacity).then(
+          setVariations
+        );
       }
     }
   }, [product]);
 
   useEffect(() => {
     // Set the initial selected variation and image if they exist in the value
-    const [, initialVariationId, initialImageId] = value.split(',');
-    if (initialVariationId) {
-      setSelectedVariation(initialVariationId);
+    const [, variationId, imageId] = value.split(',');
+    if (variationId) {
+      setSelectedVariation(variationId);
     }
-    if (initialImageId) {
-      setSelectedImage(initialImageId);
+    if (imageId) {
+      setSelectedImage(imageId);
     }
   }, [value]);
 
-  const handleImageChange = (variationId: string, imageId: string) => {
+  const handleImageChange = (variationId: string, imageId: string, imageSrc: string) => {
     setSelectedVariation(variationId);
     setSelectedImage(imageId);
-    const newValue = `${value.split(',')[0]},${variationId},${imageId}`;
+    const sku = value.split(',')[0];
+    const cleanImageSrc = imageSrc.split('?')[0]; // Remove query parameters from the image URL
+    const newValue = `${sku},${variationId},${imageId},${cleanImageSrc}`;
     ctx.setFieldValue(ctx.fieldPath, newValue);
   };
 
@@ -223,7 +236,8 @@ export default function Value({ value, onReset }: ValueProps) {
                 <ul>
                   {product.pricing_list.map((price, index) => (
                     <li key={index}>
-                      {price.attributes.formatted_amount} ({price.attributes.name})
+                      {price.attributes.formatted_amount} (
+                      {price.attributes.name})
                     </li>
                   ))}
                 </ul>
@@ -266,18 +280,24 @@ export default function Value({ value, onReset }: ValueProps) {
                             <input
                               type="radio"
                               name="variation"
-                              value={`${variant.id},${image.id}`}
+                              value={`${variant.id},${image.id},${image.responsiveImage.src.split('?')[0]}`}
                               checked={selectedVariation === variant.id && selectedImage === image.id}
-                              onChange={() => handleImageChange(variant.id, image.id)}
+                              onChange={() => handleImageChange(variant.id, image.id, image.responsiveImage.src)}
                               className={s["variation-radio"]}
                             />
                             <img
                               src={image.responsiveImage.src}
-                              alt={`${variant.variantType.variation} - Image ${image.id}`}
+                              alt={image.responsiveImage.alt}
                               width="50"
                               height="50"
                               className={s["variation-image"]}
                             />
+                            <span className={s["variation-image-alt"]}>
+                              {image.responsiveImage.alt}
+                            </span>
+                            <span className={s["variation-image-tooltip"]}>
+                              {image.responsiveImage.alt}
+                            </span>
                           </label>
                         ))}
                       </div>
