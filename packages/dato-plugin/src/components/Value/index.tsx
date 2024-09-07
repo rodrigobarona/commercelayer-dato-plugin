@@ -52,13 +52,10 @@ interface Image {
 
 interface VariationImageCarouselProps {
   images: Image[];
+  onImageChange: (imageId: string) => void;
 }
 
-const VariationImageCarousel: React.FC<VariationImageCarouselProps> = ({
-  images,
-}) => {
-  console.log("Carousel images:", images);
-
+const VariationImageCarousel: React.FC<VariationImageCarouselProps> = ({ images, onImageChange }) => {
   const settings = {
     dots: true,
     infinite: true,
@@ -66,6 +63,13 @@ const VariationImageCarousel: React.FC<VariationImageCarouselProps> = ({
     slidesToShow: 1,
     slidesToScroll: 1,
     adaptiveHeight: true,
+    afterChange: (currentSlide: number) => {
+      const currentImage = images[currentSlide];
+      if (currentImage) {
+        // Use the index as the ID since the image doesn't have an id field
+        onImageChange(currentSlide.toString());
+      }
+    }
   };
 
   return (
@@ -171,9 +175,8 @@ const fetchVariations = async (
 export default function Value({ value, onReset }: ValueProps) {
   const ctx = useCtx<RenderFieldExtensionCtx>();
   const [variations, setVariations] = useState<Variation[]>([]);
-  const [selectedVariation, setSelectedVariation] = useState<string | null>(
-    null
-  );
+  const [selectedVariation, setSelectedVariation] = useState<string | null>(null);
+  const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
 
   const { organizationName, baseEndpoint, clientId, clientSecret } =
     normalizeConfig(ctx.plugin.attributes.parameters);
@@ -224,7 +227,18 @@ export default function Value({ value, onReset }: ValueProps) {
 
   const handleVariationChange = (variationId: string) => {
     setSelectedVariation(variationId);
-    const newValue = `${value.split(",")[0]},${variationId}`;
+    setSelectedImageId(null); // Reset selected image when variation changes
+    updateFieldValue(variationId);
+  };
+
+  const handleImageChange = (imageId: string) => {
+    setSelectedImageId(imageId);
+    updateFieldValue(selectedVariation, imageId);
+  };
+
+  const updateFieldValue = (variationId: string | null, imageId: string | null = null) => {
+    const [sku] = value.split(",");
+    const newValue = [sku, variationId, imageId].filter(Boolean).join(",");
     ctx.setFieldValue(ctx.fieldPath, newValue);
   };
 
@@ -336,6 +350,7 @@ export default function Value({ value, onReset }: ValueProps) {
                         />
                         <VariationImageCarousel
                           images={variant.variantImageGallery}
+                          onImageChange={handleImageChange}
                         />
                         <span className={s["variation-name"]}>
                           {variant.variantType.variation}
