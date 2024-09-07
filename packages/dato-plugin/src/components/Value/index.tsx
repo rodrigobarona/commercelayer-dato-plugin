@@ -10,18 +10,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faExternalLinkAlt,
   faTimesCircle,
-  faExclamationTriangle,
 } from "@fortawesome/free-solid-svg-icons";
-
-const fetchProductByCodeSelector = (state: State) => state.fetchProductByCode;
-
-interface Variation {
-  id: string;
-  variantType: {
-    variation: string;
-  };
-  variantImageGallery: Image[];
-}
 
 interface Image {
   id: string;
@@ -30,6 +19,26 @@ interface Image {
     alt: string;
   };
 }
+
+interface Variation {
+  id: string;
+  variantImageGallery: Image[];
+  variantType: {
+    variation: string;
+  };
+}
+
+interface ProductVariationBarcode {
+  id: string;
+  barcodeNumber: string;
+  vintageYear: number;
+  capacity: {
+    capacityValue: string;
+  };
+  productVariant: Variation[];
+}
+
+const fetchProductByCodeSelector = (state: State) => state.fetchProductByCode;
 
 export type ValueProps = {
   value: string;
@@ -41,17 +50,80 @@ const fetchVariations = async (
   harvestYear: string,
   bottleCapacity: string
 ): Promise<Variation[]> => {
-  // Implement the actual fetching logic here
-  // For now, we'll return an empty array
-  return [];
+  const query = `
+    query {
+      allProductVariationBarcodes(filter: {
+        barcodeNumber: { eq: "${barcode}" }
+      }) {
+        id
+        barcodeNumber
+        vintageYear
+        capacity {
+          capacityValue
+        }
+        productVariant {
+          id
+          variantImageGallery {
+          id
+            responsiveImage(imgixParams: {fit: fillmax, h: "150", w: "100", q: "90", auto: format}) {
+              src
+              alt
+            }
+          }
+          variantType {
+            variation
+          }
+        }
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch("https://graphql.datocms.com/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer 45fc8dc1a9f26a390d9d451ea9ee00",
+      },
+      body: JSON.stringify({ query }),
+    });
+
+    const data = await response.json();
+    console.log("API Response:", data); // Log the entire response
+
+    if (data.errors) {
+      console.error("GraphQL Errors:", data.errors);
+      return [];
+    }
+
+    if (!data.data || !data.data.allProductVariationBarcodes) {
+      console.error("Unexpected API response structure:", data);
+      return [];
+    }
+
+    // Filter the results on the client side
+    const filteredVariations = data.data.allProductVariationBarcodes.filter(
+      (variation: ProductVariationBarcode) =>
+        variation.vintageYear === parseInt(harvestYear) &&
+        variation.capacity.capacityValue === bottleCapacity + " mL"
+    );
+
+    console.log("Filtered Variations:", filteredVariations);
+
+    return filteredVariations[0]?.productVariant || [];
+  } catch (error) {
+    console.error("Error fetching variations:", error);
+    return [];
+  }
 };
 
 export default function Value({ value, onReset }: ValueProps) {
   const ctx = useCtx<RenderFieldExtensionCtx>();
   const [variations, setVariations] = useState<Variation[]>([]);
-  const [selectedVariation, setSelectedVariation] = useState<string | null>(null);
+  const [selectedVariation, setSelectedVariation] = useState<string | null>(
+    null
+  );
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [warnings, setWarnings] = useState<string[]>([]);
 
   const { organizationName, baseEndpoint, clientId, clientSecret } =
     normalizeConfig(ctx.plugin.attributes.parameters);
@@ -94,7 +166,7 @@ export default function Value({ value, onReset }: ValueProps) {
 
   useEffect(() => {
     // Set the initial selected variation and image if they exist in the value
-    const [, , variationId, imageId] = value.split(',');
+    const [, , variationId, imageId] = value.split(",");
     if (variationId) {
       setSelectedVariation(variationId);
     }
@@ -103,36 +175,16 @@ export default function Value({ value, onReset }: ValueProps) {
     }
   }, [value]);
 
-  useEffect(() => {
-    if (product) {
-      const newWarnings = [];
-
-      if (!product.attributes.metadata?.Barcode) {
-        newWarnings.push("Barcode is missing in the metadata. The product cannot be published.");
-      }
-
-      if (!product.pricing_list || product.pricing_list.length === 0) {
-        newWarnings.push("No price list is configured for this product. Please add a price list before publishing.");
-      }
-
-      if (!product.stock_items || product.stock_items.length === 0) {
-        newWarnings.push("No stock information is available for this product. Please add stock information before publishing.");
-      }
-
-      if (variations.length === 0) {
-        newWarnings.push("No variations are available for this product. The product cannot be published or sold without variations.");
-      }
-
-      setWarnings(newWarnings);
-    }
-  }, [product, variations]);
-
-  const handleImageChange = (variationId: string, imageId: string, imageSrc: string) => {
+  const handleImageChange = (
+    variationId: string,
+    imageId: string,
+    imageSrc: string
+  ) => {
     setSelectedVariation(variationId);
     setSelectedImage(imageId);
-    const [sku] = value.split(',');
-    const barcode = product?.attributes.metadata?.Barcode || '';
-    const cleanImageSrc = imageSrc.split('?')[0]; // Remove query parameters from the image URL
+    const [sku] = value.split(",");
+    const barcode = product?.attributes.metadata?.Barcode || "";
+    const cleanImageSrc = imageSrc.split("?")[0]; // Remove query parameters from the image URL
     const newValue = `${sku},${barcode},${variationId},${imageId},${cleanImageSrc}`;
     ctx.setFieldValue(ctx.fieldPath, newValue);
   };
@@ -152,19 +204,9 @@ export default function Value({ value, onReset }: ValueProps) {
       })}
     >
       {status === "error" && (
-        <div className={s["error"]}>
+        <div className={s["product"]}>
           API Error! Could not fetch details for SKU:&nbsp;
-          <code>{value.split(',')[0]}</code>
-        </div>
-      )}
-      {warnings.length > 0 && (
-        <div className={s["warnings"]}>
-          {warnings.map((warning, index) => (
-            <div key={index} className={s["warning"]}>
-              <FontAwesomeIcon icon={faExclamationTriangle} />
-              <span>{warning}</span>
-            </div>
-          ))}
+          <code>{value}</code>
         </div>
       )}
       {product && (
@@ -195,7 +237,7 @@ export default function Value({ value, onReset }: ValueProps) {
             </div>
             {renderMetadata(product.attributes.metadata)}
 
-            {product.pricing_list && product.pricing_list.length > 0 ? (
+            {product.pricing_list && product.pricing_list.length > 0 && (
               <div className={s["product__producttype"]}>
                 <strong>Prices:</strong>
                 <ul>
@@ -207,13 +249,8 @@ export default function Value({ value, onReset }: ValueProps) {
                   ))}
                 </ul>
               </div>
-            ) : (
-              <div className={s["product__producttype"]}>
-                <strong>Prices:</strong> No price list available
-              </div>
             )}
-            
-            {product.stock_items && product.stock_items.length > 0 ? (
+            {product.stock_items && product.stock_items.length > 0 && (
               <div className={s["product__producttype"]}>
                 <strong>Stock:</strong>
                 <ul>
@@ -231,13 +268,8 @@ export default function Value({ value, onReset }: ValueProps) {
                   })}
                 </ul>
               </div>
-            ) : (
-              <div className={s["product__producttype"]}>
-                <strong>Stock:</strong> No stock information available
-              </div>
             )}
-            
-            {variations.length > 0 ? (
+            {variations.length > 0 && (
               <div className={s["product__producttype"]}>
                 <strong>Variations:</strong>
                 <div className={s["variations-list"]}>
@@ -246,18 +278,29 @@ export default function Value({ value, onReset }: ValueProps) {
                       <h4>{variant.variantType.variation}</h4>
                       <div className={s["variation-images"]}>
                         {variant.variantImageGallery.map((image: Image) => (
-                          <label 
-                            key={image.id} 
+                          <label
+                            key={image.id}
                             className={classNames(s["variation-item"], {
-                              [s["variation-item--selected"]]: selectedVariation === variant.id && selectedImage === image.id
+                              [s["variation-item--selected"]]:
+                                selectedVariation === variant.id &&
+                                selectedImage === image.id,
                             })}
                           >
                             <input
                               type="radio"
                               name="variation"
-                              value={`${variant.id},${image.id},${image.responsiveImage.src.split('?')[0]}`}
-                              checked={selectedVariation === variant.id && selectedImage === image.id}
-                              onChange={() => handleImageChange(variant.id, image.id, image.responsiveImage.src)}
+                              value={`${variant.id},${image.id},${image.responsiveImage.src.split("?")[0]}`}
+                              checked={
+                                selectedVariation === variant.id &&
+                                selectedImage === image.id
+                              }
+                              onChange={() =>
+                                handleImageChange(
+                                  variant.id,
+                                  image.id,
+                                  image.responsiveImage.src
+                                )
+                              }
                               className={s["variation-radio"]}
                             />
                             <img
@@ -267,9 +310,6 @@ export default function Value({ value, onReset }: ValueProps) {
                               height="50"
                               className={s["variation-image"]}
                             />
-                            <span className={s["variation-image-alt"]}>
-                              {image.responsiveImage.alt}
-                            </span>
                             <span className={s["variation-image-tooltip"]}>
                               {image.responsiveImage.alt}
                             </span>
@@ -279,10 +319,6 @@ export default function Value({ value, onReset }: ValueProps) {
                     </div>
                   ))}
                 </div>
-              </div>
-            ) : (
-              <div className={s["product__producttype"]}>
-                <strong>Variations:</strong> No variations available
               </div>
             )}
           </div>
