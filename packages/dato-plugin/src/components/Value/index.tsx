@@ -64,7 +64,11 @@ const VariationImageCarousel: React.FC<VariationImageCarouselProps> = ({ images,
     slidesToScroll: 1,
     adaptiveHeight: true,
     afterChange: (currentSlide: number) => {
-      onImageChange(currentSlide.toString());
+      const currentImage = images[currentSlide];
+      if (currentImage) {
+        // Use the index as the ID since the image doesn't have an id field
+        onImageChange(currentSlide.toString());
+      }
     }
   };
 
@@ -172,9 +176,7 @@ export default function Value({ value, onReset }: ValueProps) {
   const ctx = useCtx<RenderFieldExtensionCtx>();
   const [variations, setVariations] = useState<Variation[]>([]);
   const [selectedVariation, setSelectedVariation] = useState<string | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
-  // selectedImageId is used in useEffect, so we keep it despite the warning
 
   const { organizationName, baseEndpoint, clientId, clientSecret } =
     normalizeConfig(ctx.plugin.attributes.parameters);
@@ -229,12 +231,9 @@ export default function Value({ value, onReset }: ValueProps) {
     updateFieldValue(variationId);
   };
 
-  const handleImageChange = (imageId: string, variationId: string) => {
+  const handleImageChange = (imageId: string) => {
     setSelectedImageId(imageId);
-    if (selectedVariation !== variationId) {
-      setSelectedVariation(variationId);
-    }
-    updateFieldValue(variationId, imageId);
+    updateFieldValue(selectedVariation, imageId);
   };
 
   const updateFieldValue = (variationId: string | null, imageId: string | null = null) => {
@@ -327,31 +326,38 @@ export default function Value({ value, onReset }: ValueProps) {
               <div className={s["product__producttype"]}>
                 <strong>Variations:</strong>
                 <div className={s["variations-list"]}>
-                  {variations.map((variant: Variation) => (
-                    <label
-                      key={variant.id}
-                      className={classNames(s["variation-item"], {
-                        [s["variation-item--selected"]]:
-                          selectedVariation === variant.id,
-                      })}
-                    >
-                      <input
-                        type="radio"
-                        name="variation"
-                        value={variant.id}
-                        checked={selectedVariation === variant.id}
-                        onChange={() => handleVariationChange(variant.id)}
-                        className={s["variation-radio"]}
-                      />
-                      <VariationImageCarousel
-                        images={variant.variantImageGallery}
-                        onImageChange={(imageId) => handleImageChange(imageId, variant.id)}
-                      />
-                      <span className={s["variation-name"]}>
-                        {variant.variantType.variation}
-                      </span>
-                    </label>
-                  ))}
+                  {variations.map((variant: Variation) => {
+                    console.log("Variant:", variant);
+                    console.log(
+                      "Variant image gallery:",
+                      variant.variantImageGallery
+                    );
+                    return (
+                      <label
+                        key={variant.id}
+                        className={classNames(s["variation-item"], {
+                          [s["variation-item--selected"]]:
+                            selectedVariation === variant.id,
+                        })}
+                      >
+                        <input
+                          type="radio"
+                          name="variation"
+                          value={variant.id}
+                          checked={selectedVariation === variant.id}
+                          onChange={() => handleVariationChange(variant.id)}
+                          className={s["variation-radio"]}
+                        />
+                        <VariationImageCarousel
+                          images={variant.variantImageGallery}
+                          onImageChange={handleImageChange}
+                        />
+                        <span className={s["variation-name"]}>
+                          {variant.variantType.variation}
+                        </span>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
             )}
