@@ -65,7 +65,7 @@ const fetchVariations = async (
           id
           variantImageGallery {
           id
-            responsiveImage(imgixParams: {fit: fillmax, h: "200", w: "200", q: "90", auto: format}) {
+            responsiveImage(imgixParams: {fit: fillmax, h: "150", w: "100", q: "90", auto: format}) {
               src
               alt
             }
@@ -120,7 +120,9 @@ const fetchVariations = async (
 export default function Value({ value, onReset }: ValueProps) {
   const ctx = useCtx<RenderFieldExtensionCtx>();
   const [variations, setVariations] = useState<Variation[]>([]);
-  const [selectedVariation, setSelectedVariation] = useState<string | null>(null);
+  const [selectedVariation, setSelectedVariation] = useState<string | null>(
+    null
+  );
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const { organizationName, baseEndpoint, clientId, clientSecret } =
@@ -164,7 +166,7 @@ export default function Value({ value, onReset }: ValueProps) {
 
   useEffect(() => {
     // Set the initial selected variation and image if they exist in the value
-    const [, variationId, imageId] = value.split(',');
+    const [, , variationId, imageId] = value.split(",");
     if (variationId) {
       setSelectedVariation(variationId);
     }
@@ -173,12 +175,17 @@ export default function Value({ value, onReset }: ValueProps) {
     }
   }, [value]);
 
-  const handleImageChange = (variationId: string, imageId: string, imageSrc: string) => {
+  const handleImageChange = (
+    variationId: string,
+    imageId: string,
+    imageSrc: string
+  ) => {
     setSelectedVariation(variationId);
     setSelectedImage(imageId);
-    const sku = value.split(',')[0];
-    const cleanImageSrc = imageSrc.split('?')[0]; // Remove query parameters from the image URL
-    const newValue = `${sku},${variationId},${imageId},${cleanImageSrc}`;
+    const [sku] = value.split(",");
+    const barcode = product?.attributes.metadata?.Barcode || "";
+    const cleanImageSrc = imageSrc.split("?")[0]; // Remove query parameters from the image URL
+    const newValue = `${sku},${barcode},${variationId},${imageId},${cleanImageSrc}`;
     ctx.setFieldValue(ctx.fieldPath, newValue);
   };
 
@@ -271,18 +278,29 @@ export default function Value({ value, onReset }: ValueProps) {
                       <h4>{variant.variantType.variation}</h4>
                       <div className={s["variation-images"]}>
                         {variant.variantImageGallery.map((image: Image) => (
-                          <label 
-                            key={image.id} 
+                          <label
+                            key={image.id}
                             className={classNames(s["variation-item"], {
-                              [s["variation-item--selected"]]: selectedVariation === variant.id && selectedImage === image.id
+                              [s["variation-item--selected"]]:
+                                selectedVariation === variant.id &&
+                                selectedImage === image.id,
                             })}
                           >
                             <input
                               type="radio"
                               name="variation"
-                              value={`${variant.id},${image.id},${image.responsiveImage.src.split('?')[0]}`}
-                              checked={selectedVariation === variant.id && selectedImage === image.id}
-                              onChange={() => handleImageChange(variant.id, image.id, image.responsiveImage.src)}
+                              value={`${variant.id},${image.id},${image.responsiveImage.src.split("?")[0]}`}
+                              checked={
+                                selectedVariation === variant.id &&
+                                selectedImage === image.id
+                              }
+                              onChange={() =>
+                                handleImageChange(
+                                  variant.id,
+                                  image.id,
+                                  image.responsiveImage.src
+                                )
+                              }
                               className={s["variation-radio"]}
                             />
                             <img
@@ -292,9 +310,6 @@ export default function Value({ value, onReset }: ValueProps) {
                               height="50"
                               className={s["variation-image"]}
                             />
-                            <span className={s["variation-image-alt"]}>
-                              {image.responsiveImage.alt}
-                            </span>
                             <span className={s["variation-image-tooltip"]}>
                               {image.responsiveImage.alt}
                             </span>
