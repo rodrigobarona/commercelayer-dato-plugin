@@ -193,4 +193,38 @@ export default class CommerceLayerClient {
 
     return body;
   }
+
+  async updateSkuImageUrl(skuId: string, imageUrl: string): Promise<void> {
+    const endpoint = `/api/skus/${skuId}`;
+    const body = {
+      data: {
+        type: "skus",
+        id: skuId,
+        attributes: {
+          image_url: imageUrl
+        }
+      }
+    };
+
+    await this.patch(endpoint, body);
+  }
+
+  async patch(path: string, body: any) {
+    const token = await this.getToken();
+
+    const response = await fetch(`${this.baseEndpoint}${path}`, {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/vnd.api+json",
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (response.status !== 200) {
+      throw new Error(`Invalid status code: ${response.status}`);
+    }
+
+    return response.json();
+  }
 }
