@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { normalizeConfig } from "../../types";
-import { useCtx, Button } from "datocms-react-ui";
+import { useCtx } from "datocms-react-ui";
 import { RenderFieldExtensionCtx } from "datocms-plugin-sdk";
 import CommerceLayerClient from "../../utils/CommerceLayerClient";
 import useStore, { State } from "../../utils/useStore";
@@ -118,10 +118,6 @@ const fetchVariations = async (
 
 export default function Value({ value, onReset }: ValueProps) {
   const ctx = useCtx<RenderFieldExtensionCtx>();
-  const client = useMemo(
-    () => new CommerceLayerClient(normalizeConfig(ctx.plugin.attributes.parameters)),
-    [ctx.plugin.attributes.parameters]
-  );
   const [variations, setVariations] = useState<Variation[]>([]);
   const [selectedVariation, setSelectedVariation] = useState<string | null>(
     null
@@ -132,6 +128,17 @@ export default function Value({ value, onReset }: ValueProps) {
   const { organizationName, baseEndpoint, clientId, clientSecret } =
     normalizeConfig(ctx.plugin.attributes.parameters);
 
+  const client = useMemo(
+    () =>
+      new CommerceLayerClient({
+        organizationName,
+        baseEndpoint,
+        clientId,
+        clientSecret,
+      }),
+    [organizationName, baseEndpoint, clientId, clientSecret]
+  );
+
   const { product, status } = useStore(
     useCallback((state) => state.getProduct(value.split(",")[0]), [value])
   );
@@ -139,7 +146,7 @@ export default function Value({ value, onReset }: ValueProps) {
   const fetchProductByCode = useStore(fetchProductByCodeSelector);
 
   const handleImageChange = useCallback(
-    async (variationId: string, imageId: string, imageSrc: string) => {
+    (variationId: string, imageId: string, imageSrc: string) => {
       setSelectedVariation(variationId);
       setSelectedImage(imageId);
       const [sku] = value.split(",");
@@ -147,20 +154,8 @@ export default function Value({ value, onReset }: ValueProps) {
       const cleanImageSrc = imageSrc.split("?")[0]; // Remove query parameters from the image URL
       const newValue = `${sku},${barcode},${variationId},${imageId},${cleanImageSrc}`;
       ctx.setFieldValue(ctx.fieldPath, newValue);
-
-      // Update the SKU image_url in Commerce Layer
-      try {
-        if (product) {
-          await client.updateSkuImageUrl(product.id, cleanImageSrc);
-          console.log("SKU image_url updated successfully");
-        } else {
-          console.error("Cannot update SKU image_url: product is null");
-        }
-      } catch (error) {
-        console.error("Error updating SKU image_url:", error);
-      }
     },
-    [value, product, ctx, client]
+    [value, product, ctx]
   );
 
   useEffect(() => {
@@ -384,15 +379,9 @@ export default function Value({ value, onReset }: ValueProps) {
           </div>
         </div>
       )}
-      <Button
-        onClick={onReset}
-        fullWidth
-        buttonType="negative"
-        buttonSize="s"
-        leftIcon={<FontAwesomeIcon icon={faTimesCircle} />}
-      >
-        Reset
-      </Button>
+      <button type="button" onClick={onReset} className={s["reset"]}>
+        <FontAwesomeIcon icon={faTimesCircle} />
+      </button>
     </div>
   );
 }
