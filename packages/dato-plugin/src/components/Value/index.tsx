@@ -194,6 +194,26 @@ export default function Value({ value, onReset }: ValueProps) {
         fetchVariations(barcode, harvestYear, bottleCapacity).then(
           (fetchedVariations) => {
             setVariations(fetchedVariations);
+            const [, , , , storedImageId] = value.split(",");
+            
+            if (storedImageId) {
+              const variationWithStoredImage = fetchedVariations.find(variation => 
+                variation.variantImageGallery.some(image => image.id === storedImageId)
+              );
+              
+              if (variationWithStoredImage) {
+                const storedImage = variationWithStoredImage.variantImageGallery.find(image => image.id === storedImageId);
+                handleImageChange(
+                  variationWithStoredImage.id,
+                  storedImageId,
+                  storedImage!.responsiveImage.src,
+                  variationWithStoredImage.referencingProductId
+                );
+                return;
+              }
+            }
+            
+            // If no stored image or it wasn't found, select the first variation
             if (fetchedVariations.length > 0 && !selectedVariation) {
               const firstVariation = fetchedVariations[0];
               const firstImage = firstVariation.variantImageGallery[0];
@@ -210,7 +230,7 @@ export default function Value({ value, onReset }: ValueProps) {
         );
       }
     }
-  }, [product, handleImageChange, selectedVariation]);
+  }, [product, handleImageChange, selectedVariation, value]);
 
   useEffect(() => {
     const [, , variationId, referencingProductId, imageId] = value.split(",");
