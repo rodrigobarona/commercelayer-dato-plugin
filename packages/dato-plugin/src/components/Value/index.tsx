@@ -60,10 +60,6 @@ const fetchVariations = async (
         capacity {
           capacityValue
         }
-             _allReferencingProducts {
-      productName(locale: pt)
-      id
-    }
         productVariant {
           id
           variantImageGallery {
@@ -77,7 +73,6 @@ const fetchVariations = async (
             variation
           }
         }
-
       }
     }
   `;
@@ -124,10 +119,7 @@ const fetchVariations = async (
 export default function Value({ value, onReset }: ValueProps) {
   const ctx = useCtx<RenderFieldExtensionCtx>();
   const client = useMemo(
-    () =>
-      new CommerceLayerClient(
-        normalizeConfig(ctx.plugin.attributes.parameters)
-      ),
+    () => new CommerceLayerClient(normalizeConfig(ctx.plugin.attributes.parameters)),
     [ctx.plugin.attributes.parameters]
   );
   const [variations, setVariations] = useState<Variation[]>([]);
