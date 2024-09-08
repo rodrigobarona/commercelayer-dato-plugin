@@ -65,6 +65,7 @@ const fetchVariations = async (
           capacityValue
         }
         _allReferencingProducts {
+          productName(locale: pt)
           id
         }
         productVariant {
@@ -116,10 +117,11 @@ const fetchVariations = async (
     console.log("Filtered Variations:", filteredVariations);
 
     if (filteredVariations.length > 0) {
-      const referencingProductId = filteredVariations[0]._allReferencingProducts?.[0]?.id || '';
+      const referencingProductId =
+        filteredVariations[0]._allReferencingProducts?.[0]?.id || "";
       return filteredVariations[0].productVariant.map((variant: Variation) => ({
         ...variant,
-        referencingProductId
+        referencingProductId,
       }));
     }
 
@@ -157,7 +159,12 @@ export default function Value({ value, onReset }: ValueProps) {
   const fetchProductByCode = useStore(fetchProductByCodeSelector);
 
   const handleImageChange = useCallback(
-    async (variationId: string, imageId: string, imageSrc: string, referencingProductId: string) => {
+    async (
+      variationId: string,
+      imageId: string,
+      imageSrc: string,
+      referencingProductId: string
+    ) => {
       setSelectedVariation(variationId);
       setSelectedImage(imageId);
       const [sku] = value.split(",");
@@ -195,14 +202,20 @@ export default function Value({ value, onReset }: ValueProps) {
           (fetchedVariations) => {
             setVariations(fetchedVariations);
             const [, , , , storedImageId] = value.split(",");
-            
+
             if (storedImageId) {
-              const variationWithStoredImage = fetchedVariations.find(variation => 
-                variation.variantImageGallery.some(image => image.id === storedImageId)
+              const variationWithStoredImage = fetchedVariations.find(
+                (variation) =>
+                  variation.variantImageGallery.some(
+                    (image) => image.id === storedImageId
+                  )
               );
-              
+
               if (variationWithStoredImage) {
-                const storedImage = variationWithStoredImage.variantImageGallery.find(image => image.id === storedImageId);
+                const storedImage =
+                  variationWithStoredImage.variantImageGallery.find(
+                    (image) => image.id === storedImageId
+                  );
                 handleImageChange(
                   variationWithStoredImage.id,
                   storedImageId,
@@ -212,7 +225,7 @@ export default function Value({ value, onReset }: ValueProps) {
                 return;
               }
             }
-            
+
             // If no stored image or it wasn't found, select the first variation
             if (fetchedVariations.length > 0 && !selectedVariation) {
               const firstVariation = fetchedVariations[0];
