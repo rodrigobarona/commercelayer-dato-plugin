@@ -58,8 +58,19 @@ export default function BrowseProductsModal({ ctx }: { ctx: RenderModalCtx }) {
     });
   }, [organizationName, baseEndpoint, clientId, clientSecret]);
 
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
   useEffect(() => {
-    performSearch(client, query);
+    if (isInitialLoad) {
+      performSearch(client, '');
+      setIsInitialLoad(false);
+    }
+  }, [isInitialLoad, performSearch, client]);
+
+  useEffect(() => {
+    if (query) {
+      performSearch(client, query);
+    }
   }, [performSearch, query, client]);
 
   const handleSubmit = (e: FormEvent) => {
@@ -121,45 +132,51 @@ export default function BrowseProductsModal({ ctx }: { ctx: RenderModalCtx }) {
         </div>
         <div className={s["container"]}>
           <h4>All Products</h4>
-          {products && (
-            <div
-              className={classNames(s["products"], {
-                [s["products__loading"]]: status === "loading",
-              })}
-            >
-              {products.map((product: Product) => (
+          {isInitialLoad ? (
+            <Spinner size={25} placement="centered" />
+          ) : (
+            <>
+              {status === 'loading' && <Spinner size={25} placement="centered" />}
+              {status === 'success' && products && products.length > 0 && (
                 <div
-                  key={product.id}
-                  onClick={() => ctx.resolve(product)}
-                  className={s["product"]}
+                  className={classNames(s["products"], {
+                    [s["products__loading"]]: status !== "success" || isInitialLoad,
+                  })}
                 >
-                  {product.attributes.image_url && (
-                    <div className={s["product__image"]}>
-                      <img
-                        src={`${product.attributes.image_url}?auto=format&w=100&h=100&fit=crop`}
-                        alt={product.attributes.code}
-                      />
+                  {products.map((product: Product) => (
+                    <div
+                      key={product.id}
+                      onClick={() => ctx.resolve(product)}
+                      className={s["product"]}
+                    >
+                      {product.attributes.image_url && (
+                        <div className={s["product__image"]}>
+                          <img
+                            src={`${product.attributes.image_url}?auto=format&w=100&h=100&fit=crop`}
+                            alt={product.attributes.code}
+                          />
+                        </div>
+                      )}
+                      <div className={s["product__content"]}>
+                        <div className={s["product__code"]}>
+                          {product.attributes.name}
+                        </div>
+                        <div className={s["product__title"]}>
+                          <strong>SKU:</strong>&nbsp;{product.attributes.code}
+                        </div>
+                        {renderMetadata(product.attributes.metadata)}
+                      </div>
                     </div>
-                  )}
-                  <div className={s["product__content"]}>
-                    <div className={s["product__code"]}>
-                      {product.attributes.name}
-                    </div>
-                    <div className={s["product__title"]}>
-                      <strong>SKU:</strong>&nbsp;{product.attributes.code}
-                    </div>
-                    {renderMetadata(product.attributes.metadata)}
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-          {status === "loading" && <Spinner size={25} placement="centered" />}
-          {status === "success" && products && products.length === 0 && (
-            <div className={s["empty"]}>No products found!</div>
-          )}
-          {status === "error" && (
-            <div className={s["empty"]}>API call failed!</div>
+              )}
+              {status === 'success' && (!products || products.length === 0) && (
+                <div className={s["empty"]}>No products found!</div>
+              )}
+              {status === 'error' && (
+                <div className={s["empty"]}>API call failed!</div>
+              )}
+            </>
           )}
         </div>
       </div>
