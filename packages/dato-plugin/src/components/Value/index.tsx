@@ -151,13 +151,12 @@ export default function Value({ value, onReset }: ValueProps) {
       setSelectedImage(imageId);
       const [sku] = value.split(",");
       const barcode = product?.attributes.metadata?.Barcode || "";
-      const cleanImageSrc = imageSrc.split("?")[0];
-      const newValue = `${sku},${barcode},${variationId},${imageId},${cleanImageSrc}`;
+      const newValue = `${sku},${barcode},${variationId}`;
       ctx.setFieldValue(ctx.fieldPath, newValue);
 
       try {
         if (product) {
-          await client.updateSkuImageUrl(product.id, cleanImageSrc);
+          await client.updateSkuImageUrl(product.id, imageSrc);
           console.log("SKU image_url updated successfully");
         } else {
           console.error("Cannot update SKU image_url: product is null");
@@ -202,12 +201,9 @@ export default function Value({ value, onReset }: ValueProps) {
   }, [product, handleImageChange, selectedVariation]);
 
   useEffect(() => {
-    const [, , variationId, imageId] = value.split(",");
+    const [, , variationId] = value.split(",");
     if (variationId) {
       setSelectedVariation(variationId);
-    }
-    if (imageId) {
-      setSelectedImage(imageId);
     }
   }, [value]);
 
@@ -250,13 +246,6 @@ export default function Value({ value, onReset }: ValueProps) {
       </div>
     ));
   };
-
-  useEffect(() => {
-    console.log("Product:", product);
-    console.log("Variations:", variations);
-  }, [product, variations]);
-
-  console.log("Rendering Value component", { product, status, variations });
 
   return (
     <div
@@ -353,7 +342,7 @@ export default function Value({ value, onReset }: ValueProps) {
                             <input
                               type="radio"
                               name="variation"
-                              value={`${variant.id},${image.id},${image.responsiveImage.src.split("?")[0]}`}
+                              value={`${variant.id}`}
                               checked={
                                 selectedVariation === variant.id &&
                                 selectedImage === image.id
