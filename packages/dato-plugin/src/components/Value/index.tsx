@@ -131,7 +131,9 @@ export default function Value({ value, onReset }: ValueProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
 
-  const { organizationName } = normalizeConfig(ctx.plugin.attributes.parameters);
+  const { organizationName } = normalizeConfig(
+    ctx.plugin.attributes.parameters
+  );
 
   const { product, status } = useStore(
     useCallback((state) => state.getProduct(value.split(",")[0]), [value])
@@ -277,14 +279,6 @@ export default function Value({ value, onReset }: ValueProps) {
       )}
       {product && (
         <div className={s["product"]}>
-          {product.attributes.image_url && (
-            <div
-              className={s["product__image"]}
-              style={{
-                backgroundImage: `url(${product.attributes.image_url})`,
-              }}
-            />
-          )}
           <div className={s["product__info"]}>
             <div className={s["product__title"]}>
               <a
