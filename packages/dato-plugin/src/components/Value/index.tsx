@@ -21,6 +21,7 @@ interface Variation {
     variation: string;
   };
   variantImageGallery: Image[];
+  referencingProductId: string;
 }
 
 interface Image {
@@ -37,6 +38,9 @@ interface ProductVariationBarcode {
     capacityValue: string;
   };
   productVariant: Variation;
+  _allReferencingProducts: {
+    id: string;
+  }[];
 }
 
 export type ValueProps = {
@@ -60,10 +64,11 @@ const fetchVariations = async (
         capacity {
           capacityValue
         }
-             _allReferencingProducts {
-      productName(locale: pt)
-      id
-    }
+
+        _allReferencingProducts {
+          id
+        }
+
         productVariant {
           id
           variantImageGallery {
@@ -112,7 +117,15 @@ const fetchVariations = async (
 
     console.log("Filtered Variations:", filteredVariations);
 
-    return filteredVariations[0]?.productVariant || [];
+    if (filteredVariations.length > 0) {
+      const referencingProductId = filteredVariations[0]._allReferencingProducts?.[0]?.id || '';
+      return filteredVariations[0].productVariant.map((variant: Variation) => ({
+        ...variant,
+        referencingProductId
+      }));
+    }
+
+    return [];
   } catch (error) {
     console.error("Error fetching variations:", error);
     return [];
@@ -126,7 +139,9 @@ export default function Value({ value, onReset }: ValueProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
 
-  const { organizationName } = normalizeConfig(ctx.plugin.attributes.parameters);
+  const { organizationName } = normalizeConfig(
+    ctx.plugin.attributes.parameters
+  );
 
   const client = useMemo(
     () =>
@@ -146,19 +161,20 @@ export default function Value({ value, onReset }: ValueProps) {
   const fetchProductByCode = useStore(fetchProductByCodeSelector);
 
   const handleImageChange = useCallback(
-    async (variationId: string, imageId: string, imageSrc: string) => {
+    async (variationId: string, imageId: string, imageSrc: string, referencingProductId: string) => {
       setSelectedVariation(variationId);
       setSelectedImage(imageId);
       const [sku] = value.split(",");
       const barcode = product?.attributes.metadata?.Barcode || "";
-      const cleanImageSrc = imageSrc.split("?")[0]; // Remove query parameters from the image URL
-      const newValue = `${sku},${barcode},${variationId},${imageId},${cleanImageSrc}`;
+
+      const newValue = `${sku},${barcode},${variationId},${referencingProductId},${imageId}`;
+
       ctx.setFieldValue(ctx.fieldPath, newValue);
 
       // Update the SKU image_url in Commerce Layer
       try {
         if (product) {
-          await client.updateSkuImageUrl(product.id, cleanImageSrc);
+          await client.updateSkuImageUrl(product.id, imageSrc);
           console.log("SKU image_url updated successfully");
         } else {
           console.error("Cannot update SKU image_url: product is null");
@@ -185,22 +201,50 @@ export default function Value({ value, onReset }: ValueProps) {
         fetchVariations(barcode, harvestYear, bottleCapacity).then(
           (fetchedVariations) => {
             setVariations(fetchedVariations);
+            const [, , , , storedImageId] = value.split(",");
+            
+            if (storedImageId) {
+              const variationWithStoredImage = fetchedVariations.find(variation => 
+                variation.variantImageGallery.some(image => image.id === storedImageId)
+              );
+              
+              if (variationWithStoredImage) {
+                const storedImage = variationWithStoredImage.variantImageGallery.find(image => image.id === storedImageId);
+                handleImageChange(
+                  variationWithStoredImage.id,
+                  storedImageId,
+                  storedImage!.responsiveImage.src,
+                  variationWithStoredImage.referencingProductId
+                );
+                return;
+              }
+            }
+            
+            // If no stored image or it wasn't found, select the first variation
             if (fetchedVariations.length > 0 && !selectedVariation) {
               const firstVariation = fetchedVariations[0];
               const firstImage = firstVariation.variantImageGallery[0];
               if (firstImage) {
-                handleImageChange(firstVariation.id, firstImage.id, firstImage.responsiveImage.src);
+
+                handleImageChange(
+                  firstVariation.id,
+                  firstImage.id,
+                  firstImage.responsiveImage.src,
+                  firstVariation.referencingProductId
+                );
+
               }
             }
           }
         );
       }
     }
-  }, [product, handleImageChange, selectedVariation]);
+  }, [product, handleImageChange, selectedVariation, value]);
 
   useEffect(() => {
-    // Set the initial selected variation and image if they exist in the value
-    const [, , variationId, imageId] = value.split(",");
+
+    const [, , variationId, referencingProductId, imageId] = value.split(",");
+
     if (variationId) {
       setSelectedVariation(variationId);
     }
@@ -241,13 +285,6 @@ export default function Value({ value, onReset }: ValueProps) {
     ));
   };
 
-  useEffect(() => {
-    console.log("Product:", product);
-    console.log("Variations:", variations);
-  }, [product, variations]);
-
-  console.log("Rendering Value component", { product, status, variations });
-
   return (
     <div
       className={classNames(s["value"], {
@@ -272,14 +309,6 @@ export default function Value({ value, onReset }: ValueProps) {
       )}
       {product && (
         <div className={s["product"]}>
-          {product.attributes.image_url && (
-            <div
-              className={s["product__image"]}
-              style={{
-                backgroundImage: `url(${product.attributes.image_url})`,
-              }}
-            />
-          )}
           <div className={s["product__info"]}>
             <div className={s["product__title"]}>
               <a
@@ -348,9 +377,21 @@ export default function Value({ value, onReset }: ValueProps) {
                             <input
                               type="radio"
                               name="variation"
-                              value={`${variant.id},${image.id},${image.responsiveImage.src.split('?')[0]}`}
-                              checked={selectedVariation === variant.id && selectedImage === image.id}
-                              onChange={() => handleImageChange(variant.id, image.id, image.responsiveImage.src)}
+
+                              value={`${variant.id},${image.id}`}
+                              checked={
+                                selectedVariation === variant.id &&
+                                selectedImage === image.id
+                              }
+                              onChange={() =>
+                                handleImageChange(
+                                  variant.id,
+                                  image.id,
+                                  image.responsiveImage.src,
+                                  variant.referencingProductId
+                                )
+                              }
+
                               className={s["variation-radio"]}
                             />
                             <img
