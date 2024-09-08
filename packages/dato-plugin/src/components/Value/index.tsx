@@ -37,7 +37,7 @@ interface ProductVariationBarcode {
   capacity: {
     capacityValue: string;
   };
-  productVariant: Variation[];
+  productVariant: Variation;
   _allReferencingProducts: {
     id: string;
   }[];
@@ -162,7 +162,7 @@ export default function Value({ value, onReset }: ValueProps) {
       setSelectedImage(imageId);
       const [sku] = value.split(",");
       const barcode = product?.attributes.metadata?.Barcode || "";
-      const newValue = `${sku},${barcode},${variationId},${referencingProductId}`;
+      const newValue = `${sku},${barcode},${variationId},${referencingProductId},${imageId}`;
       ctx.setFieldValue(ctx.fieldPath, newValue);
 
       try {
@@ -213,9 +213,12 @@ export default function Value({ value, onReset }: ValueProps) {
   }, [product, handleImageChange, selectedVariation]);
 
   useEffect(() => {
-    const [, , variationId, referencingProductId] = value.split(",");
+    const [, , variationId, referencingProductId, imageId] = value.split(",");
     if (variationId) {
       setSelectedVariation(variationId);
+    }
+    if (imageId) {
+      setSelectedImage(imageId);
     }
   }, [value]);
 
@@ -354,7 +357,7 @@ export default function Value({ value, onReset }: ValueProps) {
                             <input
                               type="radio"
                               name="variation"
-                              value={`${variant.id}`}
+                              value={`${variant.id},${image.id}`}
                               checked={
                                 selectedVariation === variant.id &&
                                 selectedImage === image.id
