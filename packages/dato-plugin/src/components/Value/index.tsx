@@ -60,10 +60,14 @@ const fetchVariations = async (
         capacity {
           capacityValue
         }
+             _allReferencingProducts {
+      productName(locale: pt)
+      id
+    }
         productVariant {
           id
           variantImageGallery {
-          id
+            id
             responsiveImage(imgixParams: {fit: fillmax, h: "150", w: "100", q: "90", auto: format}) {
               src
               alt
@@ -100,7 +104,6 @@ const fetchVariations = async (
       return [];
     }
 
-    // Filter the results on the client side
     const filteredVariations = data.data.allProductVariationBarcodes.filter(
       (variation: ProductVariationBarcode) =>
         variation.vintageYear === parseInt(harvestYear) &&
@@ -123,8 +126,7 @@ export default function Value({ value, onReset }: ValueProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
 
-  const { organizationName, baseEndpoint, clientId, clientSecret } =
-    normalizeConfig(ctx.plugin.attributes.parameters);
+  const { organizationName } = normalizeConfig(ctx.plugin.attributes.parameters);
 
   const client = useMemo(
     () =>
@@ -143,15 +145,30 @@ export default function Value({ value, onReset }: ValueProps) {
 
   const fetchProductByCode = useStore(fetchProductByCodeSelector);
 
-  const handleImageChange = useCallback((variationId: string, imageId: string, imageSrc: string) => {
-    setSelectedVariation(variationId);
-    setSelectedImage(imageId);
-    const [sku] = value.split(',');
-    const barcode = product?.attributes.metadata?.Barcode || '';
-    const cleanImageSrc = imageSrc.split('?')[0]; // Remove query parameters from the image URL
-    const newValue = `${sku},${barcode},${variationId},${imageId},${cleanImageSrc}`;
-    ctx.setFieldValue(ctx.fieldPath, newValue);
-  }, [value, product, ctx]);
+  const handleImageChange = useCallback(
+    async (variationId: string, imageId: string, imageSrc: string) => {
+      setSelectedVariation(variationId);
+      setSelectedImage(imageId);
+      const [sku] = value.split(",");
+      const barcode = product?.attributes.metadata?.Barcode || "";
+      const cleanImageSrc = imageSrc.split("?")[0]; // Remove query parameters from the image URL
+      const newValue = `${sku},${barcode},${variationId},${imageId},${cleanImageSrc}`;
+      ctx.setFieldValue(ctx.fieldPath, newValue);
+
+      // Update the SKU image_url in Commerce Layer
+      try {
+        if (product) {
+          await client.updateSkuImageUrl(product.id, cleanImageSrc);
+          console.log("SKU image_url updated successfully");
+        } else {
+          console.error("Cannot update SKU image_url: product is null");
+        }
+      } catch (error) {
+        console.error("Error updating SKU image_url:", error);
+      }
+    },
+    [value, product, ctx, client]
+  );
 
   useEffect(() => {
     fetchProductByCode(client, value.split(",")[0]);
@@ -162,7 +179,7 @@ export default function Value({ value, onReset }: ValueProps) {
       const barcode = product.attributes.metadata.Barcode;
       const harvestYear = product.attributes.metadata.HarvestYear?.toString();
       const bottleCapacity =
-        product.attributes.metadata.BottleCapacity?.split(" ")[0]; // Extract only the number
+        product.attributes.metadata.BottleCapacity?.split(" ")[0];
 
       if (barcode && harvestYear && bottleCapacity) {
         fetchVariations(barcode, harvestYear, bottleCapacity).then(
@@ -183,7 +200,7 @@ export default function Value({ value, onReset }: ValueProps) {
 
   useEffect(() => {
     // Set the initial selected variation and image if they exist in the value
-    const [, , variationId, imageId] = value.split(',');
+    const [, , variationId, imageId] = value.split(",");
     if (variationId) {
       setSelectedVariation(variationId);
     }
@@ -223,6 +240,13 @@ export default function Value({ value, onReset }: ValueProps) {
       </div>
     ));
   };
+
+  useEffect(() => {
+    console.log("Product:", product);
+    console.log("Variations:", variations);
+  }, [product, variations]);
+
+  console.log("Rendering Value component", { product, status, variations });
 
   return (
     <div
