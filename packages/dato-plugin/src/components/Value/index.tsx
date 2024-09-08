@@ -361,11 +361,11 @@ export default function Value({ value, onReset }: ValueProps) {
                             <img
                               src={image.responsiveImage.src}
                               alt={image.responsiveImage.alt}
-                              width="100"
-                              height="150"
+                              width="50"
+                              height="50"
                               className={s["variation-image"]}
                             />
-                            <span className={s["variation-image-tooltip"]}>
+                            <span className={s["variation-image-alt"]}>
                               {image.responsiveImage.alt}
                             </span>
                           </label>
