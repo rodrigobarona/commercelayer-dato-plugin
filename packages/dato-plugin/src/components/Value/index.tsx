@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { normalizeConfig } from "../../types";
-import { useCtx, Button } from "datocms-react-ui";
+import { useCtx } from "datocms-react-ui";
 import { RenderFieldExtensionCtx } from "datocms-plugin-sdk";
 import CommerceLayerClient from "../../utils/CommerceLayerClient";
 import useStore, { State } from "../../utils/useStore";
@@ -64,9 +64,11 @@ const fetchVariations = async (
         capacity {
           capacityValue
         }
+
         _allReferencingProducts {
           id
         }
+
         productVariant {
           id
           variantImageGallery {
@@ -132,22 +134,24 @@ const fetchVariations = async (
 
 export default function Value({ value, onReset }: ValueProps) {
   const ctx = useCtx<RenderFieldExtensionCtx>();
-  const client = useMemo(
-    () =>
-      new CommerceLayerClient(
-        normalizeConfig(ctx.plugin.attributes.parameters)
-      ),
-    [ctx.plugin.attributes.parameters]
-  );
   const [variations, setVariations] = useState<Variation[]>([]);
-  const [selectedVariation, setSelectedVariation] = useState<string | null>(
-    null
-  );
+  const [selectedVariation, setSelectedVariation] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
 
   const { organizationName } = normalizeConfig(
     ctx.plugin.attributes.parameters
+  );
+
+  const client = useMemo(
+    () =>
+      new CommerceLayerClient({
+        organizationName,
+        baseEndpoint,
+        clientId,
+        clientSecret,
+      }),
+    [organizationName, baseEndpoint, clientId, clientSecret]
   );
 
   const { product, status } = useStore(
@@ -162,9 +166,12 @@ export default function Value({ value, onReset }: ValueProps) {
       setSelectedImage(imageId);
       const [sku] = value.split(",");
       const barcode = product?.attributes.metadata?.Barcode || "";
+
       const newValue = `${sku},${barcode},${variationId},${referencingProductId},${imageId}`;
+
       ctx.setFieldValue(ctx.fieldPath, newValue);
 
+      // Update the SKU image_url in Commerce Layer
       try {
         if (product) {
           await client.updateSkuImageUrl(product.id, imageSrc);
@@ -218,12 +225,14 @@ export default function Value({ value, onReset }: ValueProps) {
               const firstVariation = fetchedVariations[0];
               const firstImage = firstVariation.variantImageGallery[0];
               if (firstImage) {
+
                 handleImageChange(
                   firstVariation.id,
                   firstImage.id,
                   firstImage.responsiveImage.src,
                   firstVariation.referencingProductId
                 );
+
               }
             }
           }
@@ -233,7 +242,9 @@ export default function Value({ value, onReset }: ValueProps) {
   }, [product, handleImageChange, selectedVariation, value]);
 
   useEffect(() => {
+
     const [, , variationId, referencingProductId, imageId] = value.split(",");
+
     if (variationId) {
       setSelectedVariation(variationId);
     }
@@ -247,27 +258,19 @@ export default function Value({ value, onReset }: ValueProps) {
       const newWarnings = [];
 
       if (!product.attributes.metadata?.Barcode) {
-        newWarnings.push(
-          "Barcode is missing in the metadata. The product cannot be published."
-        );
+        newWarnings.push("Barcode is missing in the metadata. The product cannot be published.");
       }
 
       if (!product.pricing_list || product.pricing_list.length === 0) {
-        newWarnings.push(
-          "No price list is configured for this product. The product cannot be published."
-        );
+        newWarnings.push("No price list is configured for this product. Please add a price list before publishing.");
       }
 
       if (!product.stock_items || product.stock_items.length === 0) {
-        newWarnings.push(
-          "No stock information is available for this product. The product cannot be published."
-        );
+        newWarnings.push("No stock information is available for this product. Please add stock information before publishing.");
       }
 
       if (variations.length === 0) {
-        newWarnings.push(
-          "No variations are available for this product. The product cannot be published."
-        );
+        newWarnings.push("No variations are available for this product. The product cannot be published or sold without variations.");
       }
 
       setWarnings(newWarnings);
@@ -290,9 +293,8 @@ export default function Value({ value, onReset }: ValueProps) {
     >
       {status === "error" && (
         <div className={s["error"]}>
-          The SKU&nbsp;
-          <code>{value.split(",")[0]}</code>&nbsp;is missing the stock
-          information.
+          API Error! Could not fetch details for SKU:&nbsp;
+          <code>{value.split(',')[0]}</code>
         </div>
       )}
       {warnings.length > 0 && (
@@ -366,17 +368,16 @@ export default function Value({ value, onReset }: ValueProps) {
                       <h4>{variant.variantType.variation}</h4>
                       <div className={s["variation-images"]}>
                         {variant.variantImageGallery.map((image: Image) => (
-                          <label
-                            key={image.id}
+                          <label 
+                            key={image.id} 
                             className={classNames(s["variation-item"], {
-                              [s["variation-item--selected"]]:
-                                selectedVariation === variant.id &&
-                                selectedImage === image.id,
+                              [s["variation-item--selected"]]: selectedVariation === variant.id && selectedImage === image.id
                             })}
                           >
                             <input
                               type="radio"
                               name="variation"
+
                               value={`${variant.id},${image.id}`}
                               checked={
                                 selectedVariation === variant.id &&
@@ -390,16 +391,17 @@ export default function Value({ value, onReset }: ValueProps) {
                                   variant.referencingProductId
                                 )
                               }
+
                               className={s["variation-radio"]}
                             />
                             <img
                               src={image.responsiveImage.src}
                               alt={image.responsiveImage.alt}
-                              width="100"
-                              height="150"
+                              width="50"
+                              height="50"
                               className={s["variation-image"]}
                             />
-                            <span className={s["variation-image-tooltip"]}>
+                            <span className={s["variation-image-alt"]}>
                               {image.responsiveImage.alt}
                             </span>
                           </label>
