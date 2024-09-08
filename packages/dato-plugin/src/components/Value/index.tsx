@@ -60,6 +60,10 @@ const fetchVariations = async (
         capacity {
           capacityValue
         }
+               _allReferencingProducts {
+      productName(locale: pt)
+      id
+    }
         productVariant {
           id
           variantImageGallery {
