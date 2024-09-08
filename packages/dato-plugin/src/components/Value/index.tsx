@@ -23,6 +23,8 @@ interface Variation {
   variantImageGallery: Image[];
   referencingProductId: string;
   productNamePt: string;
+  productNameEn: string;
+  productNameEs: string;
 }
 
 interface Image {
@@ -41,7 +43,9 @@ interface ProductVariationBarcode {
   productVariant: Variation;
   _allReferencingProducts: {
     id: string;
-    productName: string;
+    productNamePt: string;
+    productNameEn: string;
+    productNameEs: string;
   }[];
 }
 
@@ -68,7 +72,9 @@ const fetchVariations = async (
         }
         _allReferencingProducts {
           id
-          productName(locale: pt)
+          productNamePt: productName(locale: pt)
+          productNameEn: productName(locale: en)
+          productNameEs: productName(locale: es)
         }
         productVariant {
           id
@@ -120,11 +126,15 @@ const fetchVariations = async (
 
     if (filteredVariations.length > 0) {
       const referencingProductId = filteredVariations[0]._allReferencingProducts?.[0]?.id || '';
-      const productNamePt = filteredVariations[0]._allReferencingProducts?.[0]?.productName || '';
+      const productNamePt = filteredVariations[0]._allReferencingProducts?.[0]?.productNamePt || '';
+      const productNameEn = filteredVariations[0]._allReferencingProducts?.[0]?.productNameEn || '';
+      const productNameEs = filteredVariations[0]._allReferencingProducts?.[0]?.productNameEs || '';
       return filteredVariations[0].productVariant.map((variant: Variation) => ({
         ...variant,
         referencingProductId,
-        productNamePt
+        productNamePt,
+        productNameEn,
+        productNameEs
       }));
     }
 
@@ -162,7 +172,7 @@ export default function Value({ value, onReset }: ValueProps) {
   const fetchProductByCode = useStore(fetchProductByCodeSelector);
 
   const handleImageChange = useCallback(
-    async (variationId: string, imageId: string, imageSrc: string, referencingProductId: string, productNamePt: string) => {
+    async (variationId: string, imageId: string, imageSrc: string, referencingProductId: string, productNamePt: string, productNameEn: string, productNameEs: string) => {
       setSelectedVariation(variationId);
       setSelectedImage(imageId);
       const [sku] = value.split(",");
@@ -179,7 +189,9 @@ export default function Value({ value, onReset }: ValueProps) {
           // Update the SKU metadata
           const updatedMetadata = {
             ...product.attributes.metadata,
-            productNamePt: productNamePt
+            productNamePt: productNamePt,
+            productNameEn: productNameEn,
+            productNameEs: productNameEs
           };
           await client.updateSkuMetadata(product.id, updatedMetadata);
           console.log("SKU metadata updated successfully");
@@ -228,7 +240,9 @@ export default function Value({ value, onReset }: ValueProps) {
                   storedImageId,
                   storedImage!.responsiveImage.src,
                   variationWithStoredImage.referencingProductId,
-                  variationWithStoredImage.productNamePt
+                  variationWithStoredImage.productNamePt,
+                  variationWithStoredImage.productNameEn,
+                  variationWithStoredImage.productNameEs
                 );
                 return;
               }
@@ -244,7 +258,9 @@ export default function Value({ value, onReset }: ValueProps) {
                   firstImage.id,
                   firstImage.responsiveImage.src,
                   firstVariation.referencingProductId,
-                  firstVariation.productNamePt
+                  firstVariation.productNamePt,
+                  firstVariation.productNameEn,
+                  firstVariation.productNameEs
                 );
               }
             }
@@ -410,7 +426,9 @@ export default function Value({ value, onReset }: ValueProps) {
                                   image.id,
                                   image.responsiveImage.src,
                                   variant.referencingProductId,
-                                  variant.productNamePt
+                                  variant.productNamePt,
+                                  variant.productNameEn,
+                                  variant.productNameEs
                                 )
                               }
                               className={s["variation-radio"]}
