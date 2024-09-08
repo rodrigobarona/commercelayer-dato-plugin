@@ -119,9 +119,7 @@ const fetchVariations = async (
 export default function Value({ value, onReset }: ValueProps) {
   const ctx = useCtx<RenderFieldExtensionCtx>();
   const [variations, setVariations] = useState<Variation[]>([]);
-  const [selectedVariation, setSelectedVariation] = useState<string | null>(
-    null
-  );
+  const [selectedVariation, setSelectedVariation] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
 
@@ -145,18 +143,15 @@ export default function Value({ value, onReset }: ValueProps) {
 
   const fetchProductByCode = useStore(fetchProductByCodeSelector);
 
-  const handleImageChange = useCallback(
-    (variationId: string, imageId: string, imageSrc: string) => {
-      setSelectedVariation(variationId);
-      setSelectedImage(imageId);
-      const [sku] = value.split(",");
-      const barcode = product?.attributes.metadata?.Barcode || "";
-      const cleanImageSrc = imageSrc.split("?")[0]; // Remove query parameters from the image URL
-      const newValue = `${sku},${barcode},${variationId},${imageId},${cleanImageSrc}`;
-      ctx.setFieldValue(ctx.fieldPath, newValue);
-    },
-    [value, product, ctx]
-  );
+  const handleImageChange = useCallback((variationId: string, imageId: string, imageSrc: string) => {
+    setSelectedVariation(variationId);
+    setSelectedImage(imageId);
+    const [sku] = value.split(',');
+    const barcode = product?.attributes.metadata?.Barcode || '';
+    const cleanImageSrc = imageSrc.split('?')[0]; // Remove query parameters from the image URL
+    const newValue = `${sku},${barcode},${variationId},${imageId},${cleanImageSrc}`;
+    ctx.setFieldValue(ctx.fieldPath, newValue);
+  }, [value, product, ctx]);
 
   useEffect(() => {
     fetchProductByCode(client, value.split(",")[0]);
@@ -177,11 +172,7 @@ export default function Value({ value, onReset }: ValueProps) {
               const firstVariation = fetchedVariations[0];
               const firstImage = firstVariation.variantImageGallery[0];
               if (firstImage) {
-                handleImageChange(
-                  firstVariation.id,
-                  firstImage.id,
-                  firstImage.responsiveImage.src
-                );
+                handleImageChange(firstVariation.id, firstImage.id, firstImage.responsiveImage.src);
               }
             }
           }
@@ -192,7 +183,7 @@ export default function Value({ value, onReset }: ValueProps) {
 
   useEffect(() => {
     // Set the initial selected variation and image if they exist in the value
-    const [, , variationId, imageId] = value.split(",");
+    const [, , variationId, imageId] = value.split(',');
     if (variationId) {
       setSelectedVariation(variationId);
     }
@@ -206,27 +197,19 @@ export default function Value({ value, onReset }: ValueProps) {
       const newWarnings = [];
 
       if (!product.attributes.metadata?.Barcode) {
-        newWarnings.push(
-          "Barcode is missing in the metadata. The product cannot be published."
-        );
+        newWarnings.push("Barcode is missing in the metadata. The product cannot be published.");
       }
 
       if (!product.pricing_list || product.pricing_list.length === 0) {
-        newWarnings.push(
-          "No price list is configured for this product. The product cannot be published."
-        );
+        newWarnings.push("No price list is configured for this product. Please add a price list before publishing.");
       }
 
       if (!product.stock_items || product.stock_items.length === 0) {
-        newWarnings.push(
-          "No stock information is available for this product. The product cannot be published."
-        );
+        newWarnings.push("No stock information is available for this product. Please add stock information before publishing.");
       }
 
       if (variations.length === 0) {
-        newWarnings.push(
-          "No variations are available for this product. The product cannot be published."
-        );
+        newWarnings.push("No variations are available for this product. The product cannot be published or sold without variations.");
       }
 
       setWarnings(newWarnings);
@@ -249,9 +232,8 @@ export default function Value({ value, onReset }: ValueProps) {
     >
       {status === "error" && (
         <div className={s["error"]}>
-          The SKU&nbsp;
-          <code>{value.split(",")[0]}</code>&nbsp;is missing the stock
-          information.
+          API Error! Could not fetch details for SKU:&nbsp;
+          <code>{value.split(',')[0]}</code>
         </div>
       )}
       {warnings.length > 0 && (
@@ -333,29 +315,18 @@ export default function Value({ value, onReset }: ValueProps) {
                       <h4>{variant.variantType.variation}</h4>
                       <div className={s["variation-images"]}>
                         {variant.variantImageGallery.map((image: Image) => (
-                          <label
-                            key={image.id}
+                          <label 
+                            key={image.id} 
                             className={classNames(s["variation-item"], {
-                              [s["variation-item--selected"]]:
-                                selectedVariation === variant.id &&
-                                selectedImage === image.id,
+                              [s["variation-item--selected"]]: selectedVariation === variant.id && selectedImage === image.id
                             })}
                           >
                             <input
                               type="radio"
                               name="variation"
-                              value={`${variant.id},${image.id},${image.responsiveImage.src.split("?")[0]}`}
-                              checked={
-                                selectedVariation === variant.id &&
-                                selectedImage === image.id
-                              }
-                              onChange={() =>
-                                handleImageChange(
-                                  variant.id,
-                                  image.id,
-                                  image.responsiveImage.src
-                                )
-                              }
+                              value={`${variant.id},${image.id},${image.responsiveImage.src.split('?')[0]}`}
+                              checked={selectedVariation === variant.id && selectedImage === image.id}
+                              onChange={() => handleImageChange(variant.id, image.id, image.responsiveImage.src)}
                               className={s["variation-radio"]}
                             />
                             <img
