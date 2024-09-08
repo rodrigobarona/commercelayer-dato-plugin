@@ -21,6 +21,7 @@ interface Variation {
     variation: string;
   };
   variantImageGallery: Image[];
+  referencingProductId: string;
 }
 
 interface Image {
@@ -36,7 +37,10 @@ interface ProductVariationBarcode {
   capacity: {
     capacityValue: string;
   };
-  productVariant: Variation;
+  productVariant: Variation[];
+  _allReferencingProducts: {
+    id: string;
+  }[];
 }
 
 export type ValueProps = {
@@ -60,10 +64,9 @@ const fetchVariations = async (
         capacity {
           capacityValue
         }
-               _allReferencingProducts {
-      productName(locale: pt)
-      id
-    }
+        _allReferencingProducts {
+          id
+        }
         productVariant {
           id
           variantImageGallery {
@@ -112,7 +115,15 @@ const fetchVariations = async (
 
     console.log("Filtered Variations:", filteredVariations);
 
-    return filteredVariations[0]?.productVariant || [];
+    if (filteredVariations.length > 0) {
+      const referencingProductId = filteredVariations[0]._allReferencingProducts?.[0]?.id || '';
+      return filteredVariations[0].productVariant.map((variant: Variation) => ({
+        ...variant,
+        referencingProductId
+      }));
+    }
+
+    return [];
   } catch (error) {
     console.error("Error fetching variations:", error);
     return [];
@@ -146,12 +157,12 @@ export default function Value({ value, onReset }: ValueProps) {
   const fetchProductByCode = useStore(fetchProductByCodeSelector);
 
   const handleImageChange = useCallback(
-    async (variationId: string, imageId: string, imageSrc: string) => {
+    async (variationId: string, imageId: string, imageSrc: string, referencingProductId: string) => {
       setSelectedVariation(variationId);
       setSelectedImage(imageId);
       const [sku] = value.split(",");
       const barcode = product?.attributes.metadata?.Barcode || "";
-      const newValue = `${sku},${barcode},${variationId}`;
+      const newValue = `${sku},${barcode},${variationId},${referencingProductId}`;
       ctx.setFieldValue(ctx.fieldPath, newValue);
 
       try {
@@ -190,7 +201,8 @@ export default function Value({ value, onReset }: ValueProps) {
                 handleImageChange(
                   firstVariation.id,
                   firstImage.id,
-                  firstImage.responsiveImage.src
+                  firstImage.responsiveImage.src,
+                  firstVariation.referencingProductId
                 );
               }
             }
@@ -201,7 +213,7 @@ export default function Value({ value, onReset }: ValueProps) {
   }, [product, handleImageChange, selectedVariation]);
 
   useEffect(() => {
-    const [, , variationId] = value.split(",");
+    const [, , variationId, referencingProductId] = value.split(",");
     if (variationId) {
       setSelectedVariation(variationId);
     }
@@ -351,7 +363,8 @@ export default function Value({ value, onReset }: ValueProps) {
                                 handleImageChange(
                                   variant.id,
                                   image.id,
-                                  image.responsiveImage.src
+                                  image.responsiveImage.src,
+                                  variant.referencingProductId
                                 )
                               }
                               className={s["variation-radio"]}
@@ -377,15 +390,9 @@ export default function Value({ value, onReset }: ValueProps) {
           </div>
         </div>
       )}
-      <Button
-        onClick={onReset}
-        fullWidth
-        buttonType="negative"
-        buttonSize="s"
-        leftIcon={<FontAwesomeIcon icon={faTimesCircle} />}
-      >
-        Reset
-      </Button>
+      <button type="button" onClick={onReset} className={s["reset"]}>
+        <FontAwesomeIcon icon={faTimesCircle} />
+      </button>
     </div>
   );
 }
