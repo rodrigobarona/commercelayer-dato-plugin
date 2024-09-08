@@ -227,4 +227,22 @@ export default class CommerceLayerClient {
 
     return response.json();
   }
+
+  async updateSkuMetadata(skuId: string, metadata: Record<string, string>) {
+    const response = await this.patch(`/api/skus/${skuId}`, {
+      data: {
+        type: 'skus',
+        id: skuId,
+        attributes: {
+          metadata: metadata
+        },
+      },
+    });
+
+    if (response.status !== 200) {
+      throw new Error(`Failed to update SKU metadata: ${response.status}`);
+    }
+
+    return response.json();
+  }
 }

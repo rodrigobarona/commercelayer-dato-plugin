@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { normalizeConfig } from "../../types";
-import { useCtx, Button } from "datocms-react-ui";
+import { useCtx } from "datocms-react-ui";
 import { RenderFieldExtensionCtx } from "datocms-plugin-sdk";
 import CommerceLayerClient from "../../utils/CommerceLayerClient";
 import useStore, { State } from "../../utils/useStore";
@@ -22,6 +22,7 @@ interface Variation {
   };
   variantImageGallery: Image[];
   referencingProductId: string;
+  productNamePt: string;
 }
 
 interface Image {
@@ -40,6 +41,7 @@ interface ProductVariationBarcode {
   productVariant: Variation;
   _allReferencingProducts: {
     id: string;
+    productName: string;
   }[];
 }
 
@@ -65,8 +67,8 @@ const fetchVariations = async (
           capacityValue
         }
         _allReferencingProducts {
-          productName(locale: pt)
           id
+          productName(locale: pt)
         }
         productVariant {
           id
@@ -117,11 +119,12 @@ const fetchVariations = async (
     console.log("Filtered Variations:", filteredVariations);
 
     if (filteredVariations.length > 0) {
-      const referencingProductId =
-        filteredVariations[0]._allReferencingProducts?.[0]?.id || "";
+      const referencingProductId = filteredVariations[0]._allReferencingProducts?.[0]?.id || '';
+      const productNamePt = filteredVariations[0]._allReferencingProducts?.[0]?.productName || '';
       return filteredVariations[0].productVariant.map((variant: Variation) => ({
         ...variant,
         referencingProductId,
+        productNamePt
       }));
     }
 
@@ -159,28 +162,32 @@ export default function Value({ value, onReset }: ValueProps) {
   const fetchProductByCode = useStore(fetchProductByCodeSelector);
 
   const handleImageChange = useCallback(
-    async (
-      variationId: string,
-      imageId: string,
-      imageSrc: string,
-      referencingProductId: string
-    ) => {
+    async (variationId: string, imageId: string, imageSrc: string, referencingProductId: string, productNamePt: string) => {
       setSelectedVariation(variationId);
       setSelectedImage(imageId);
       const [sku] = value.split(",");
       const barcode = product?.attributes.metadata?.Barcode || "";
       const newValue = `${sku},${barcode},${variationId},${referencingProductId},${imageId}`;
-      ctx.setFieldValue(ctx.fieldPath, newValue);
+      await ctx.setFieldValue(ctx.fieldPath, newValue);
 
       try {
         if (product) {
+          // Update the SKU image URL
           await client.updateSkuImageUrl(product.id, imageSrc);
           console.log("SKU image_url updated successfully");
+
+          // Update the SKU metadata
+          const updatedMetadata = {
+            ...product.attributes.metadata,
+            productNamePt: productNamePt
+          };
+          await client.updateSkuMetadata(product.id, updatedMetadata);
+          console.log("SKU metadata updated successfully");
         } else {
-          console.error("Cannot update SKU image_url: product is null");
+          console.error("Cannot update SKU: product is null");
         }
       } catch (error) {
-        console.error("Error updating SKU image_url:", error);
+        console.error("Error updating SKU:", error);
       }
     },
     [value, product, ctx, client]
@@ -220,7 +227,8 @@ export default function Value({ value, onReset }: ValueProps) {
                   variationWithStoredImage.id,
                   storedImageId,
                   storedImage!.responsiveImage.src,
-                  variationWithStoredImage.referencingProductId
+                  variationWithStoredImage.referencingProductId,
+                  variationWithStoredImage.productNamePt
                 );
                 return;
               }
@@ -235,7 +243,8 @@ export default function Value({ value, onReset }: ValueProps) {
                   firstVariation.id,
                   firstImage.id,
                   firstImage.responsiveImage.src,
-                  firstVariation.referencingProductId
+                  firstVariation.referencingProductId,
+                  firstVariation.productNamePt
                 );
               }
             }
@@ -400,7 +409,8 @@ export default function Value({ value, onReset }: ValueProps) {
                                   variant.id,
                                   image.id,
                                   image.responsiveImage.src,
-                                  variant.referencingProductId
+                                  variant.referencingProductId,
+                                  variant.productNamePt
                                 )
                               }
                               className={s["variation-radio"]}
